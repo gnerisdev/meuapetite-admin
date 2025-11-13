@@ -42,7 +42,14 @@ export const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'space-between',
   padding: theme.spacing(0, 1),
   paddingLeft: '1.25rem',
+  gap: theme.spacing(1),
   ...theme.mixins.toolbar,
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(0.75, 0.5),
+    paddingLeft: theme.spacing(0.75),
+    minHeight: '56px',
+    gap: theme.spacing(0.5),
+  },
   '.on': {
     display: 'flex',
     border: '2px solid #000000',
@@ -149,4 +156,54 @@ maxWidth: '250px',
 position: 'absolute', 
 right: 0, 
 top: '65px', 
+}));
+
+export const OnlineStatusWrapper = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  flex: 1,
+  minWidth: 0,
+  width: '100%',
+  maxWidth: 'calc(100% - 48px)',
+  [theme.breakpoints.down('sm')]: {
+    maxWidth: 'calc(100% - 40px)',
+  },
+}));
+
+export const OnlineStatusCard = styled('div')(({ theme, online, compact }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: compact ? theme.spacing(0.75) : theme.spacing(0.75, 1.25),
+  borderRadius: theme.spacing(1),
+  backgroundColor: online 
+    ? 'rgba(76, 175, 80, 0.12)' 
+    : 'rgba(158, 158, 158, 0.12)',
+  border: `1px solid ${online ? 'rgba(76, 175, 80, 0.3)' : 'rgba(158, 158, 158, 0.3)'}`,
+  width: compact ? '40px' : '100%',
+  minHeight: '40px',
+  justifyContent: compact ? 'center' : 'flex-start',
+  transition: 'all 0.2s ease',
+  [theme.breakpoints.down('sm')]: {
+    minHeight: '44px',
+    padding: compact ? theme.spacing(0.75) : theme.spacing(0.75, 1),
+  },
+}));
+
+export const StatusIcon = styled('div')(({ theme, online }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '28px',
+  height: '28px',
+  borderRadius: '50%',
+  backgroundColor: online
+    ? 'rgba(76, 175, 80, 0.2)'
+    : 'rgba(158, 158, 158, 0.2)',
+  color: online ? '#4caf50' : '#9e9e9e',
+  flexShrink: 0,
+  transition: 'all 0.2s ease',
+  [theme.breakpoints.down('sm')]: {
+    width: '24px',
+    height: '24px',
+  },
 }));

@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { ApiService } from 'services/api.service';
-import { Avatar, TextField, Box, Grid, Tab, Tabs } from '@mui/material';
+import { Avatar, TextField, Box, Grid, Tab, Tabs, FormControlLabel, Switch, Typography } from '@mui/material';
 import ButtonFloat from 'components/ButtonFloat';
 import BackdropLoading from 'components/BackdropLoading';
 import Header from 'components/Header';
@@ -10,7 +10,7 @@ import * as S from './style';
 
 const Create = () => {
   const apiService = new ApiService();
-  const { toast, company, setCompany } = useContext(GlobalContext);
+  const { toast, company, setCompany, themeMode, changeTheme } = useContext(GlobalContext);
   const [logo, setLogo] = useState();
   const [backgroundImage, setBackgroundImage] = useState();
   const [data, setData] = useState(null);
@@ -226,6 +226,23 @@ const Create = () => {
                   required
                 />
               </Grid>
+
+              <Grid item xs={12} sm={12} sx={{ mt: 2 }}>
+                <Typography variant="h6" sx={{ fontSize: '1rem', mb: 1 }}>
+                  Aparência
+                </Typography>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={themeMode === 'dark'}
+                      onChange={(e) => changeTheme(e.target.checked ? 'dark' : 'light')}
+                      color="primary"
+                    />
+                  }
+                  label="Modo escuro"
+                />
+              </Grid>
+
               <ButtonFloat text={'salvar'} type="submit" />
             </Grid>
           )}

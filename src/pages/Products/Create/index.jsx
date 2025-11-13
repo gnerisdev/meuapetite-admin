@@ -31,8 +31,14 @@ const Create = () => {
       if (data?.price <= 0) errors.push('Preço deve ser maior que zero');
     }
     if (data?.discountPrice && !data.discountPrice > 0) errors.push('Preço do desconto inválido');
-      if (!data?.unit?.trim().length) errors.push('Unidade de medida é obrigatório');
-    if (!data?.category) errors.push('Categoria é obrigatório');
+    
+    // Validar categoria - aceita tanto categoryId quanto categoryName
+    const hasCategoryId = data?.category && typeof data.category === 'string' && data.category.trim().length > 0;
+    const hasCategoryName = data?.categoryName && typeof data.categoryName === 'string' && data.categoryName.trim().length > 0;
+    if (!hasCategoryId && !hasCategoryName) {
+      errors.push('Categoria é obrigatório');
+    }
+    
     if (errors.length <= 0) return true;
 
     toast.error(errors.map(error => `• ${error}.`).join('\n'));
@@ -68,12 +74,18 @@ const Create = () => {
       const formData = new FormData();
       formData.append('name', data.name);
       formData.append('description', data.description || '');
-      formData.append('code', data.code || '');
       formData.append('price', data.price);
       formData.append('discountPrice', data.discountPrice);
-      formData.append('isActive', typeof data.status === 'boolean' ? data.status : true );
-      formData.append('category', data.category);
-      formData.append('unit', data.unit);
+      formData.append('isActive', true);
+      // Enviar category se for um ID válido, caso contrário enviar como categoryName
+      if (data.category && data.category.trim().length > 0 && /^[0-9a-fA-F]{24}$/.test(data.category)) {
+        formData.append('category', data.category);
+      } else if (data.categoryName && data.categoryName.trim().length > 0) {
+        // Se categoryName existe, enviar como texto para criar nova categoria
+        formData.append('categoryName', data.categoryName);
+        // Também enviar no campo category caso seja texto
+        formData.append('category', data.categoryName);
+      }
       formData.append('images', data.images[0]);
       if (complements.length >= 1) {
         formData.append('complements', JSON.stringify(complements));
@@ -98,12 +110,10 @@ const Create = () => {
       setDataInit({
         name: state.product.name,
         description: state.product.description || '',
-        code: state.product.code || '',
         price: state.product.price?.toFixed(2) || 0,
         discountPrice: state.product.discountPrice?.toFixed(2) || 0,
-        status: state.product.isActive,
         category: state.product.category._id,
-        unit: state.product.unit,
+        categoryName: state.product.category.title,
         images: []
       });
 

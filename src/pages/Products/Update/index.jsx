@@ -27,13 +27,11 @@ const Update = () => {
       setDataProduct({
         name: data.name,
         description: data.description || '',
-        code: data.code || '',
         price: data.price,
         discountPrice: data.discountPrice || 0,
-        status: data.isActive,
         category: data.category._id,
-        unit: data.unit,
-        images: [data.images[0]?.url],
+        categoryName: data.category.title,
+        images: data.images[0] ? [{ url: data.images[0]?.url, id: data.images[0]?.id }] : [],
       });
       setComplements(data.complements);
     } catch (error) {
@@ -53,7 +51,13 @@ const Update = () => {
       if (dataProduct.price <= 0) errors.push('Preço deve ser maior que zero');
     } 
     if (dataProduct.discountPrice && !dataProduct.discountPrice > 0) errors.push('Preço do desconto inválido');
-    if (!dataProduct.category) errors.push('Categoria é obrigatório');
+    
+    // Validar categoria
+    const hasCategoryId = dataProduct.category && (typeof dataProduct.category === 'string' ? dataProduct.category.trim().length > 0 : true);
+    const hasCategoryName = dataProduct.categoryName && typeof dataProduct.categoryName === 'string' && dataProduct.categoryName.trim().length > 0;
+    if (!hasCategoryId && !hasCategoryName) {
+      errors.push('Categoria é obrigatório');
+    }
     if (errors.length <= 0) return true;
 
     toast.error(errors.map(error => `• ${error}.`).join('\n'));
@@ -72,14 +76,22 @@ const Update = () => {
       const formData = new FormData();
       formData.append('name', dataProduct.name);
       formData.append('description', dataProduct.description);
-      formData.append('code', dataProduct.code);
       formData.append('price', dataProduct.price);
       formData.append('discountPrice', dataProduct.discountPrice);
-      formData.append('isActive', dataProduct.status);
-      formData.append('category', dataProduct.category);
-      formData.append('unit', dataProduct.unit);
-      formData.append('images', dataProduct.images[0]);
-      formData.append('imageId', dataProduct.images[0].id);
+      formData.append('isActive', true);
+      formData.append('category', dataProduct.category || '');
+      if (dataProduct.categoryName) {
+        formData.append('categoryName', dataProduct.categoryName);
+      }
+      
+      // Se a imagem é um File, é uma nova imagem
+      if (dataProduct.images[0] instanceof File) {
+        formData.append('images', dataProduct.images[0]);
+      } else if (dataProduct.images[0]?.id) {
+        // Se é um objeto com id, enviar o id para manter a imagem existente
+        formData.append('imageId', dataProduct.images[0].id);
+      }
+      
       formData.append('complements', JSON.stringify(complements));
 
       await apiService.put(`/admin/products/${id}`, formData, true);

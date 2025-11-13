@@ -4,6 +4,7 @@ import authRoutes from 'routes/authRoutes';
 import adminRoutes from 'routes/adminRoutes';
 import { useContext } from 'react';
 import BackdropLoading from 'components/BackdropLoading';
+import Store from 'pages/Store';
 
 const GlobalStyles = () => (
   <style>
@@ -22,13 +23,18 @@ const Routes = () => {
   const globalContext = useContext(GlobalContext);
   const { authenticationStatus } = globalContext;
 
+  // Rotas públicas (sempre acessíveis)
+  const publicRoutes = [
+    { path: '/store/:slug', element: <Store /> }
+  ];
+
   const AuthRoutes = () => {
-    const routes = useRoutes([...authRoutes]);
+    const routes = useRoutes([...authRoutes, ...publicRoutes]);
     return <>{routes}</>;
   };
 
   const AdminRoutes = () => {
-    const routes = useRoutes([...adminRoutes]);
+    const routes = useRoutes([...adminRoutes, ...publicRoutes]);
     return <>{routes}</>;
   };
 

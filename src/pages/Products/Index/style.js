@@ -1,12 +1,16 @@
 import { Button, Card, CardContent, CardMedia } from '@mui/material';
 import { styled } from '@mui/system';
 
-export const ContainerProducts = styled('main')({
+export const ContainerProducts = styled('main')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: 24,
-  marginTop: 32
-});
+  marginTop: 32,
+  padding: theme.spacing(0, 1),
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(0, 2),
+  }
+}));
 
 export const ModalContainer = styled('div')({
   background: 'rgba(113,113,113,.4)',
@@ -40,24 +44,89 @@ export const ModalContent = styled('div')({
   },
 });
 
-export const CardCustom = styled(Card)({
-  positon: 'relative',
-  // backgroundColor: ' #ffffff',
-  boxShadow: '-1px 1px 1px rgba(0, 0, 0, 0.09)',
-});
+export const CardCustom = styled(Card)(({ theme }) => ({
+  position: 'relative',
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  borderRadius: theme.spacing(2),
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  overflow: 'hidden',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+    '& .card-media-wrapper': {
+      '&::after': {
+        opacity: 1,
+      }
+    },
+    '& .overlay-actions': {
+      opacity: 1,
+      visibility: 'visible',
+    }
+  }
+}));
 
-export const CardMediaCustom = styled(CardMedia)({
-  width: 100,
-  height: 100,
-  borderRadius: 6
-});
+export const CardMediaWrapper = styled('div')(({ theme }) => ({
+  position: 'relative',
+  width: '100%',
+  paddingTop: '75%', // 4:3 aspect ratio
+  overflow: 'hidden',
+  backgroundColor: theme.palette.grey[100],
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 100%)',
+    opacity: 0,
+    transition: 'opacity 0.3s ease',
+    pointerEvents: 'none',
+  }
+}));
 
-export const CardContentCustom = styled(CardContent)({
-  display: 'grid',
-  gridTemplateColumns: '1fr 100px',
-  gap: '16px',
-  paddingBottom: '8px !important'
-});
+export const CardMediaCustom = styled(CardMedia)(({ theme }) => ({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  transition: 'transform 0.3s ease',
+  '&:hover': {
+    transform: 'scale(1.05)',
+  }
+}));
+
+export const OverlayActions = styled('div')(({ theme }) => ({
+  position: 'absolute',
+  top: theme.spacing(1),
+  right: theme.spacing(1),
+  zIndex: 2,
+  opacity: 0,
+  visibility: 'hidden',
+  transition: 'all 0.3s ease',
+  display: 'flex',
+  gap: theme.spacing(0.5),
+}));
+
+export const StatusBadge = styled('div')(({ theme }) => ({
+  position: 'absolute',
+  bottom: theme.spacing(1),
+  left: theme.spacing(1),
+  zIndex: 2,
+}));
+
+export const CardContentCustom = styled(CardContent)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  padding: `${theme.spacing(2)} !important`,
+  paddingTop: `${theme.spacing(1.5)} !important`,
+}));
 
 export const CardInfo = styled('div')({
   display: 'flex',
@@ -165,3 +234,17 @@ export const CustomButton = styled(Button)({
     backgroundColor: 'rgba(0, 123, 255, 0.8)'
   },
 });
+
+export const EmptyState = styled('div')(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(8, 2),
+  textAlign: 'center',
+  minHeight: '400px',
+  borderRadius: theme.spacing(2),
+  backgroundColor: theme.palette.mode === 'dark' 
+    ? 'rgba(255, 255, 255, 0.02)' 
+    : 'rgba(0, 0, 0, 0.02)',
+}));

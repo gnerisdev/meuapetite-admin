@@ -78,17 +78,28 @@ const Register = () => {
 
       const response = await apiService.post('/auth/register', data);
 
+      if (!response || !response.data) {
+        return toast.error('Erro de conexão. Verifique sua internet e tente novamente.');
+      }
+
       if (!response.data.success) {
-        if (!response?.data?.message) return toastSuport();
-        toast.error(response.data.message);
+        if (!response.data.message) return toastSuport();
+        return toast.error(response.data.message);
       }
 
       toast.success('Successo! Faça o login para continuar.');
       setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
-      if (error.response.data?.message) {
-        return toast.error(error.response.data.message);
+      let errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+        return toast.error(errorMessage);
+      } else if (error?.message) {
+        errorMessage = error.message;
+        return toast.error(errorMessage);
       }
+      
       return toastSuport();
     } finally {
       setTimeout(() => setLoading(false));

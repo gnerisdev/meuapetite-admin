@@ -25,6 +25,7 @@ import { ORDERSTATUS } from 'constants';
 import Header from 'components/Header';
 import Filter from 'components/Filter';
 import OrderDetailsModal from '../Details';
+import CreateManualOrder from '../CreateManual';
 import BackdropLoading from 'components/BackdropLoading';
 import * as S from './style';
 
@@ -69,6 +70,7 @@ export default function Index() {
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [filter, setFilter] = useState({});
   const [loading, setLoading] = useState(false);
+  const [openCreateModal, setOpenCreateModal] = useState(false);
 
   const modalChangeStatusOpen = (order, popupState) => {
     setCurrentOrder(order);
@@ -223,7 +225,11 @@ export default function Index() {
 
   return (
     <Box>
-      <Header title="Pedidos" buttonText="Atualizar" />
+      <Header 
+        title="Pedidos" 
+        buttonText="Novo Pedido"
+        buttonClick={() => setOpenCreateModal(true)}
+      />
 
       <Filter filters={filters} onApplyFilters={getFilters} />
 
@@ -340,6 +346,15 @@ export default function Index() {
           modalViewClose={modalDetailsClose}
         />
       )}
+
+      <CreateManualOrder
+        open={openCreateModal}
+        onClose={() => setOpenCreateModal(false)}
+        onSuccess={() => {
+          getOrders();
+          setOpenCreateModal(false);
+        }}
+      />
 
       <BackdropLoading loading={loading} />
     </Box>

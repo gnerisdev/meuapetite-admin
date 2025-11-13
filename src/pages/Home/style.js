@@ -10,27 +10,44 @@ export const SectionChart = styled('section')(({ theme }) => ({
   }
 }));
 
-export const CardWelcome = styled('div')(({ theme }) => ({
-  display: 'grid',
-  marginBottom: '32px',
-  gridTemplateColumns: '1fr',
-  justifyContent: 'center',
-  gap: '16px',
-  '@media(min-width: 576px)': {
-    gridTemplateColumns: '8fr 3fr',
-    'svg': {
-      width: '100%',
-      margin: 'auto'
-    }
-  },
-  alignItems: 'center',
-  'svg': {
-    width: '120px',
-    height: 'auto',
-    margin: 'auto'
+export const StyledCard = styled(Card)(({ theme }) => ({ 
+  maxWidth: '100%',
+  width: '100%',
+  marginBottom: '20px',
+  boxShadow: theme.shadows[2],
+  transition: 'transform 0.2s, box-shadow 0.2s',
+  overflow: 'hidden',
+  '&:hover': {
+    boxShadow: theme.shadows[4],
   }
 }));
 
-export const StyledCard = styled(Card)({ maxWidth: '100%', marginBottom: '20px' });
+export const ChartContainer = styled('div')({ 
+  width: '100%',
+  maxWidth: '100%',
+  position: 'relative',
+  overflow: 'hidden',
+  '& canvas': {
+    maxWidth: '100% !important',
+    height: 'auto !important'
+  }
+});
 
-export const ChartContainer = styled('div')({ width: '100%' });
+export const MetricCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  width: '100%',
+  maxWidth: '100%',
+  transition: 'transform 0.2s, box-shadow 0.2s',
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+  border: '1px solid rgba(0, 0, 0, 0.08)',
+  overflow: 'hidden',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: theme.shadows[8],
+  },
+  [theme.breakpoints.down('sm')]: {
+    '&:hover': {
+      transform: 'none',
+    },
+  },
+}));

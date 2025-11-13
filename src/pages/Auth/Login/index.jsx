@@ -86,7 +86,17 @@ export default function Login() {
 
       const response = await apiService.post('/auth/login', { ...data, subscription });
 
-      if (!response.data.success) return toast.error(response.data.message);
+      if (!response || !response.data) {
+        return toast.error('Erro de conexão. Verifique sua internet e tente novamente.');
+      }
+
+      if (!response.data.success) {
+        return toast.error(response.data.message || 'Erro ao fazer login. Tente novamente.');
+      }
+
+      if (!response.data._id || !response.data.token) {
+        return toast.error('Dados de autenticação inválidos. Tente novamente.');
+      }
 
       localStorage.setItem('_id', JSON.stringify(response.data._id));
       localStorage.setItem('token', JSON.stringify(response.data.token));
@@ -103,7 +113,26 @@ export default function Login() {
         return document.location.href = '/home';
       }
     } catch (e) {
-      return toast.error(e.response.data?.message);
+      let errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      
+      // Tratamento específico para diferentes tipos de erro de rede
+      if (e?.code === 'ECONNABORTED' || e?.message?.includes('timeout')) {
+        errorMessage = 'Tempo de conexão esgotado. Verifique sua internet e tente novamente.';
+      } else if (e?.code === 'ERR_NETWORK' || e?.message?.includes('Network Error')) {
+        errorMessage = 'Erro de rede. Verifique se o servidor está acessível e sua conexão está ativa.';
+      } else if (e?.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      } else if (e?.message) {
+        errorMessage = e.message;
+      } else if (e?.response?.status) {
+        if (e.response.status === 0) {
+          errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão.';
+        } else {
+          errorMessage = `Erro ${e.response.status}. Tente novamente.`;
+        }
+      }
+      
+      return toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -21,10 +21,18 @@ const Admin = (props) => {
     <ThemeProvider 
       theme={themeMode === 'dark' ? createTheme('dark') : createTheme('light')}
     >
-      <Box sx={{ display: 'flex', maxWidth: '1300px', margin: 'auto' }}>
+      <Box sx={{ display: 'flex', maxWidth: '1300px', margin: 'auto', width: '100%', overflowX: 'hidden' }}>
         <Drawer />
 
-        <Box component="main" id="app-main" sx={{ flexGrow: 1, p: 2, mt: '64px', position: 'relative' }}>
+        <Box component="main" id="app-main" sx={{ 
+          flexGrow: 1, 
+          p: { xs: 1, sm: 2 }, 
+          mt: '64px', 
+          position: 'relative',
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }}>
           <Box
             component={props.component}
             onSubmit={props.handleSubmit}

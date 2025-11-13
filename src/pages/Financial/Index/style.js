@@ -176,3 +176,15 @@ export const CustomButton = styled(Button)({
     backgroundColor: 'rgba(0, 123, 255, 0.8)'
   },
 });
+
+export const MetricCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  transition: 'transform 0.2s, box-shadow 0.2s',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: theme.shadows[8],
+  cursor: 'pointer',
+  },
+  background: 'linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)',
+  border: '1px solid rgba(0, 0, 0, 0.08)',
+}));
