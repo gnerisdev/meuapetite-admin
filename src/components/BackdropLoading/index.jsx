@@ -30,6 +30,7 @@ const BackdropLoading = (props) => {
   const [isVisible, setIsVisible] = useState(false);
   const [showContent, setShowContent] = useState(false);
   const startTimeRef = useRef(null);
+  const startTimestampRef = useRef(null);
   const timeoutRef = useRef(null);
   const minDisplayTime = 2000; // 2 segundos mínimo
 
@@ -44,20 +45,86 @@ const BackdropLoading = (props) => {
     }
 
     if (isLoading) {
+      // Salvar posição atual do scroll
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+      
+      // Desabilitar scroll e movimento em todas as direções
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = `-${scrollX}px`;
+      document.body.style.width = '100%';
+      document.body.style.touchAction = 'none';
+      document.body.style.userSelect = 'none';
+      
+      // Prevenir eventos de toque e scroll
+      const preventDefault = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      };
+      
+      // Adicionar event listeners para prevenir movimento
+      document.addEventListener('touchmove', preventDefault, { passive: false });
+      document.addEventListener('touchstart', preventDefault, { passive: false });
+      document.addEventListener('scroll', preventDefault, { passive: false });
+      document.addEventListener('wheel', preventDefault, { passive: false });
+      
+      // Guardar referência para remover depois
+      startTimeRef.current = {
+        scrollY,
+        scrollX,
+        preventDefault
+      };
+      startTimestampRef.current = Date.now();
+      
       // Iniciar loading
-      startTimeRef.current = Date.now();
       setIsVisible(true);
       setShowContent(true);
     } else {
       // Calcular tempo decorrido
-      const elapsed = startTimeRef.current ? Date.now() - startTimeRef.current : 0;
+      const elapsed = startTimestampRef.current ? Date.now() - startTimestampRef.current : 0;
       const remainingTime = Math.max(0, minDisplayTime - elapsed);
 
       // Aguardar o tempo mínimo antes de esconder
       timeoutRef.current = setTimeout(() => {
         setShowContent(false);
         // Aguardar transição antes de esconder completamente
-        setTimeout(() => setIsVisible(false), 300);
+        setTimeout(() => {
+          setIsVisible(false);
+          
+          // Restaurar scroll e movimento
+          const savedState = startTimeRef.current;
+          if (savedState && typeof savedState === 'object') {
+            const scrollY = savedState.scrollY || 0;
+            const scrollX = savedState.scrollX || 0;
+            
+            // Remover event listeners
+            if (savedState.preventDefault) {
+              document.removeEventListener('touchmove', savedState.preventDefault);
+              document.removeEventListener('touchstart', savedState.preventDefault);
+              document.removeEventListener('scroll', savedState.preventDefault);
+              document.removeEventListener('wheel', savedState.preventDefault);
+            }
+            
+            // Restaurar estilos do body
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.width = '';
+            document.body.style.touchAction = '';
+            document.body.style.userSelect = '';
+            
+            // Restaurar posição do scroll
+            window.scrollTo(scrollX, scrollY);
+          }
+          
+          // Limpar referências
+          startTimeRef.current = null;
+          startTimestampRef.current = null;
+        }, 300);
       }, remainingTime);
     }
 
@@ -66,6 +133,27 @@ const BackdropLoading = (props) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      
+      // Garantir que tudo seja restaurado ao desmontar
+      const savedState = startTimeRef.current;
+      if (savedState && typeof savedState === 'object' && savedState.preventDefault) {
+        document.removeEventListener('touchmove', savedState.preventDefault);
+        document.removeEventListener('touchstart', savedState.preventDefault);
+        document.removeEventListener('scroll', savedState.preventDefault);
+        document.removeEventListener('wheel', savedState.preventDefault);
+      }
+      
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.width = '';
+      document.body.style.touchAction = '';
+      document.body.style.userSelect = '';
+      
+      // Limpar referências
+      startTimeRef.current = null;
+      startTimestampRef.current = null;
     };
   }, [isLoading]);
 

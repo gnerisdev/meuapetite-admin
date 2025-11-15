@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { Tab, Tabs, Box } from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { GlobalContext } from 'contexts/Global';
 import { ApiService } from 'services/api.service';
 import Header from 'components/Header';
@@ -12,6 +12,7 @@ import BackdropLoading from 'components/BackdropLoading';
 const Update = () => {
   const apiService = new ApiService();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const { toast } = useContext(GlobalContext);
   const [tabCurrent, setTabCurrent] = useState(0);
@@ -97,7 +98,8 @@ const Update = () => {
       await apiService.put(`/admin/products/${id}`, formData, true);
 
       toast.success('Produto atualizado!');
-      setTimeout(() => {navigate({ pathname: '/products' }); }, 2000);
+      // Recarrega os dados do produto para exibir as atualizações
+      await getProduct();
     } catch (e) {
       toast.error(e.response.data?.message || 'Erro ao atualizar produto');
     } finally {
@@ -111,9 +113,43 @@ const Update = () => {
     getProduct();
   }, []);
 
+  const handleBack = () => {
+    const fromPage = location.state?.fromPage;
+    const filters = location.state?.filters || {};
+    
+    if (fromPage !== undefined) {
+      // Construir URL com filtros e página
+      // fromPage agora é baseado em 1 (Pagination do MUI)
+      let url = '/products';
+      const params = new URLSearchParams();
+      
+      if (fromPage >= 1) {
+        params.append('page', fromPage); // Já está baseado em 1
+      }
+      
+      if (filters.status !== undefined && filters.status !== '') {
+        params.append('status', filters.status);
+      }
+      
+      if (filters.searchTerm) {
+        params.append('search', filters.searchTerm);
+      }
+      
+      if (filters.category) {
+        params.append('filterCategory', filters.category);
+      }
+      
+      const queryString = params.toString();
+      navigate(queryString ? `${url}?${queryString}` : url);
+    } else {
+      // Fallback para navegação padrão
+      navigate(-1);
+    }
+  };
+
   return (
     <Box component="section">
-    <Header title="Editar produto" back={-1} />
+    <Header title="Editar produto" back={handleBack} />
 
     <Tabs value={tabCurrent} onChange={handleChange} variant="scrollable" >
       <Tab label="Detalhes" />

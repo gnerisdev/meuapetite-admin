@@ -125,7 +125,8 @@ const FormProduct = (props) => {
     if (data?.images?.[0] instanceof File) {
         setImageCurrent(URL.createObjectURL(data.images[0]));
     } else if(data?.images?.[0]) {
-        setImageCurrent(data.images[0]);
+        // Se é um objeto com url, usar a propriedade url, senão usar o valor diretamente
+        setImageCurrent(data.images[0]?.url || data.images[0]);
       }
 
       // Se há uma categoria selecionada, encontrar o objeto completo

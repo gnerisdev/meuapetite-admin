@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Box, Grid, TextField, Tab, Tabs } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import ButtonFloat from 'components/ButtonFloat';
@@ -9,6 +10,7 @@ import PhoneInput from 'components/PhoneInput';
 import { propsTextField } from 'utils/form';
 
 const Settings_Info = () => {
+  const { t } = useTranslation('admin');
   const apiService = new ApiService();
   const { toast, setLoading, company, setCompany } = useContext(GlobalContext);
   const [searchParams] = useSearchParams();
@@ -16,7 +18,7 @@ const Settings_Info = () => {
     const tab = searchParams.get('tab');
     return tab ? parseInt(tab, 10) : 0;
   });
-  const [data, setData] = useState({ name: '', email: '', whatsapp: '' });
+  const [data, setData] = useState({ name: '', fantasyName: '', description: '', slogan: '', email: '', whatsapp: '' });
   const [addressData, setAddressData] = useState({
     city: '',
     district: '',
@@ -27,7 +29,7 @@ const Settings_Info = () => {
 
   const save = async (e) => {
     e.preventDefault();
-    setLoading('Aguarde...');
+      setLoading(t('common.wait'));
 
     try {
       // Salvar dados do administrador
@@ -44,18 +46,28 @@ const Settings_Info = () => {
         whatsapp: data.whatsapp
       });
 
+      // Salvar informações da loja (nome fantasia, descrição, slogan)
+      const companyInfoResponse = await apiService.put('/admin/company/info', {
+        fantasyName: data.fantasyName,
+        description: data.description,
+        slogan: data.slogan
+      });
+
       // Atualizar o contexto
       setCompany({
         ...company,
         owner: ownerResponse.data,
         email: contactResponse.data.email,
-        whatsapp: contactResponse.data.whatsapp
+        whatsapp: contactResponse.data.whatsapp,
+        fantasyName: companyInfoResponse.data.fantasyName,
+        description: companyInfoResponse.data.description,
+        slogan: companyInfoResponse.data.slogan
       });
 
-      toast.success('Dados atualizados!');
+      toast.success(t('common.dataUpdated'));
     } catch (error) {
       console.log(error);
-      toast.error('Erro ao atualizar dados');
+      toast.error(t('common.updateError'));
     } finally {
       setLoading(false);
     }
@@ -68,16 +80,14 @@ const Settings_Info = () => {
 
   const updateAddress = async (address) => {
     try {
-      setLoading('Atualizando endereço');
+      setLoading(t('common.updatingAddress'));
       const { data } = await apiService.put('/admin/company/address', address);
       setCompany({ ...company, address: data });
       setAddressData(data);
-      toast.success('Endereço atualizado');
+      toast.success(t('common.addressUpdated'));
       setOpenEditorAddress(false);
     } catch (error) {
-      toast.error(
-        'Não foi possível atualizar o endereço. Caso não esteja conseguindo, entre em contato conosco.',
-      );
+      toast.error(t('common.addressUpdateError'));
     } finally {
       setLoading(false);
     }
@@ -87,12 +97,15 @@ const Settings_Info = () => {
     try {
       setData({
         name: company?.owner?.name || '',
+        fantasyName: company?.fantasyName || '',
+        description: company?.description || '',
+        slogan: company?.slogan || '',
         email: company?.email || '',
         whatsapp: company?.whatsapp || ''
       });
       getAddress();
     } catch (error) {
-      toast.error('Não foi possível recuperar os dados');
+      toast.error(t('common.dataRetrieveError'));
     }
   }, [company]);
 
@@ -104,8 +117,8 @@ const Settings_Info = () => {
           onChange={(e, newValue) => setTabValue(newValue)}
           variant="fullWidth"
         >
-          <Tab label="Dados" />
-          <Tab label="Endereço" />
+          <Tab label={t('settings.data')} />
+          <Tab label={t('settings.address')} />
         </Tabs>
       </Box>
 
@@ -114,7 +127,7 @@ const Settings_Info = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={12}>
               <TextField
-                label="Nome"
+                label={t('settings.name')}
                 value={data?.name || ''}
                 onChange={(e) => setData({ ...data, name: e.target.value })}
                 InputLabelProps={{ shrink: !!data.name }}
@@ -125,7 +138,40 @@ const Settings_Info = () => {
             </Grid>
             <Grid item xs={12} sm={12}>
               <TextField
-                label="Email"
+                label={t('settings.fantasyName')}
+                value={data?.fantasyName || ''}
+                onChange={(e) => setData({ ...data, fantasyName: e.target.value })}
+                InputLabelProps={{ shrink: !!data.fantasyName }}
+                margin="dense"
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={12}>
+              <TextField
+                label={t('settings.storeDescription')}
+                value={data?.description || ''}
+                onChange={(e) => setData({ ...data, description: e.target.value })}
+                InputLabelProps={{ shrink: !!data.description }}
+                rows={3}
+                margin="dense"
+                multiline
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={12}>
+              <TextField
+                label={t('settings.slogan')}
+                value={data?.slogan || ''}
+                onChange={(e) => setData({ ...data, slogan: e.target.value })}
+                InputLabelProps={{ shrink: !!data.slogan }}
+                margin="dense"
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={12}>
+              <TextField
+                label={t('common.email')}
                 value={data?.email || ''}
                 type="email"
                 onChange={(e) => setData({ ...data, email: e.target.value })}
@@ -137,7 +183,7 @@ const Settings_Info = () => {
             </Grid>
             <Grid item xs={12} sm={12}>
               <PhoneInput
-                label="WhatsApp"
+                label={t('settings.whatsapp')}
                 value={data?.whatsapp || ''}
                 onChange={(e) => setData({ ...data, whatsapp: e.target.value })}
                 required
@@ -146,7 +192,7 @@ const Settings_Info = () => {
             </Grid>
           </Grid>
           <Box sx={{ mt: 2 }}>
-            <ButtonFloat text="Salvar" onClick={save} />
+            <ButtonFloat text={t('settings.save')} onClick={save} />
           </Box>
         </Box>
       )}
@@ -155,7 +201,7 @@ const Settings_Info = () => {
         <Box>
           <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
             <ButtonFloat 
-              text="Novo endereço" 
+              text={t('settings.newAddress')} 
               onClick={() => setOpenEditorAddress(!openEditorAddress)} 
             />
           </Box>
@@ -164,8 +210,8 @@ const Settings_Info = () => {
               <span>
                 {
                   addressData.zipCode?.length >= 8
-                    ? 'Para mudar o endereço clique em "NOVO ENDEREÇO"'
-                    : 'Registre o endereço para o seu negócio! Isso nos ajuda a calcular o custo de entrega ou facilita para o cliente que prefira retirar pessoalmente o pedido.'
+                    ? t('settings.changeAddress')
+                    : t('settings.registerAddress')
                 }
               </span>
             </Grid>
@@ -174,7 +220,7 @@ const Settings_Info = () => {
                 <Grid item xs={12} sm={12}>
                   <TextField
                     disabled
-                    label="Cep"
+                    label={t('settings.zipCode')}
                     value={addressData.zipCode || ''}
                     {...propsTextField}
                   />
@@ -182,7 +228,7 @@ const Settings_Info = () => {
                 <Grid item xs={12} sm={12}>
                   <TextField
                     disabled
-                    label="Cidade"
+                    label={t('settings.city')}
                     value={addressData.city || ''}
                     {...propsTextField}
                   />
@@ -190,7 +236,7 @@ const Settings_Info = () => {
                 <Grid item xs={12} sm={12}>
                   <TextField
                     disabled
-                    label="Referência/complemento"
+                    label={t('settings.reference')}
                     value={addressData.reference || ''}
                     {...propsTextField}
                   />
@@ -198,7 +244,7 @@ const Settings_Info = () => {
                 <Grid item xs={12} sm={12}>
                   <TextField
                     disabled
-                    label="Bairro"
+                    label={t('settings.district')}
                     value={addressData.district || ''}
                     {...propsTextField}
                   />
@@ -206,7 +252,7 @@ const Settings_Info = () => {
                 <Grid item xs={9} sm={9}>
                   <TextField
                     disabled
-                    label="Rua"
+                    label={t('settings.street')}
                     value={addressData.street || ''}
                     {...propsTextField}
                   />
@@ -214,7 +260,7 @@ const Settings_Info = () => {
                 <Grid item xs={3} sm={3}>
                   <TextField
                     disabled
-                    label="Número"
+                    label={t('settings.number')}
                     value={addressData.number || ''}
                     {...propsTextField}
                   />

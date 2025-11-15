@@ -6,12 +6,20 @@ import * as S from './style';
 const Header = (props) => {
   const navigate = useNavigate();
 
+  const handleBack = () => {
+    if (typeof props.back === 'function') {
+      props.back();
+    } else if (props.back !== undefined) {
+      navigate(props.back);
+    }
+  };
+
   return (
     <S.Header>
       {!props.children ? (
         <>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {props.back && <S.BtnBack className="fa-solid fa-angle-left" onClick={() => navigate(props.back)} />}
+            {props.back && <S.BtnBack className="fa-solid fa-angle-left" onClick={handleBack} />}
             <Typography variant="h1">{props.title}</Typography>
           </Box>
 

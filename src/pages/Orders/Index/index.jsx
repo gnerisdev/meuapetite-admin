@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import jsPDFInvoiceTemplate, { OutputType } from "jspdf-invoice-template";
-import { KeyboardArrowDownIcon } from 'components/icons';
+import { KeyboardArrowDownIcon, MoreVertIcon } from 'components/icons';
 import {
   Button,
   Chip,
@@ -15,9 +15,12 @@ import {
   Dialog,
   DialogContent,
   MenuItem,
-  DialogTitle
+  DialogTitle,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import PopupState, { bindMenu, bindTrigger } from 'material-ui-popup-state';
+import { useTranslation } from 'react-i18next';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import { ApplicationUtils } from 'utils/ApplicationUtils';
@@ -29,39 +32,39 @@ import CreateManualOrder from '../CreateManual';
 import BackdropLoading from 'components/BackdropLoading';
 import * as S from './style';
 
-
-const filters = [
-  {
-    name: 'searchTerm',
-    label: 'Pesquisa',
-    placeholder: 'Pedido, cliente ou endereço...',
-    type: 'text'
-  },
-  {
-    name: 'startDate',
-    label: 'Data inicial',
-    placeholder: 'Start Date',
-    type: 'date'
-  },
-  {
-    name: 'endDate',
-    label: 'Data final',
-    placeholder: 'End Date',
-    type: 'date'
-  },
-  {
-    name: 'status',
-    label: 'Status',
-    placeholder: 'Status',
-    type: 'select',
-    options: ORDERSTATUS.map(order => ({ value: order.name, label: order.label })),
-  },
-];
-
 export default function Index() {
+  const { t } = useTranslation('admin');
   const apiService = new ApiService();
   const { toast, company } = useContext(GlobalContext);
   const [orders, setOrders] = useState([]);
+  
+  const filters = [
+    {
+      name: 'searchTerm',
+      label: t('orders.search'),
+      placeholder: t('orders.searchPlaceholder'),
+      type: 'text'
+    },
+    {
+      name: 'startDate',
+      label: t('orders.startDate'),
+      placeholder: t('orders.startDate'),
+      type: 'date'
+    },
+    {
+      name: 'endDate',
+      label: t('orders.endDate'),
+      placeholder: t('orders.endDate'),
+      type: 'date'
+    },
+    {
+      name: 'status',
+      label: t('orders.status'),
+      placeholder: t('orders.status'),
+      type: 'select',
+      options: ORDERSTATUS.map(order => ({ value: order.name, label: order.label })),
+    },
+  ];
   const [currentOrder, setCurrentOrder] = useState(null);
   const [totalPages, setTotalPages] = useState([]);
   const [page, setPage] = useState(1);
@@ -143,7 +146,6 @@ export default function Index() {
 
   const changePage = (event, value) => {
     setPage(value);
-    window.scrollTo(0, 0);
   };
 
   const downloadInvoice = (order) => {
@@ -226,17 +228,19 @@ export default function Index() {
   return (
     <Box>
       <Header 
-        title="Pedidos" 
-        buttonText="Novo Pedido"
+        title={t('orders.title')} 
+        buttonText={t('orders.newOrder')}
         buttonClick={() => setOpenCreateModal(true)}
       />
 
       <Filter filters={filters} onApplyFilters={getFilters} />
 
       <S.ContainerMain>
-        {orders.map((item) => {
-          return (
-            <S.CardCustom>
+        <Grid container spacing={3}>
+          {orders.map((item) => {
+            return (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={item._id || item.id}>
+                <S.CardCustom>
               <S.WrapperAction>
                 <Chip
                   sx={{
@@ -252,54 +256,114 @@ export default function Index() {
                 <PopupState variant="popover">
                   {(popupState) => (
                     <>
-                      <Button {...bindTrigger(popupState)}>Opções <KeyboardArrowDownIcon /></Button>
-
+                      <Tooltip title="Opções">
+                        <IconButton 
+                          {...bindTrigger(popupState)}
+                          sx={{ 
+                            bgcolor: 'rgba(255, 255, 255, 0.9)',
+                            '&:hover': { bgcolor: 'rgba(255, 255, 255, 1)' }
+                          }}
+                          size="small"
+                        >
+                          <MoreVertIcon />
+                        </IconButton>
+                      </Tooltip>
                       <Menu {...bindMenu(popupState)}>
-                        <S.MenuItemCuston onClick={() => modalDetailsOpen(item, popupState)}>
-                          <span className="fa fa-circle-info"></span> Ver detalhes
-                        </S.MenuItemCuston>
-                        <S.MenuItemCuston onClick={() => modalChangeStatusOpen(item, popupState)}>
-                          <span className="fa fa-edit"></span> Alterar status
-                        </S.MenuItemCuston>
-                        <S.MenuItemCuston onClick={() => downloadInvoice(item)}>
-                          <span className="fa fa-file-pdf"></span> Baixar recibo
-                        </S.MenuItemCuston>
+                        <MenuItem 
+                          onClick={() => modalDetailsOpen(item, popupState)}
+                          sx={{ gap: 1 }}
+                        >
+                          <span className="fa fa-circle-info"></span>
+                          Ver detalhes
+                        </MenuItem>
+                        <MenuItem 
+                          onClick={() => modalChangeStatusOpen(item, popupState)}
+                          sx={{ gap: 1 }}
+                        >
+                          <span className="fa fa-edit"></span>
+                          Alterar status
+                        </MenuItem>
+                        <MenuItem 
+                          onClick={() => {
+                            downloadInvoice(item);
+                            popupState.close();
+                          }}
+                          sx={{ gap: 1 }}
+                        >
+                          <span className="fa fa-file-pdf"></span>
+                          Baixar recibo
+                        </MenuItem>
                       </Menu>
                     </>
                   )}
                 </PopupState>
               </S.WrapperAction>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <S.CardContentCustom sx={{ flex: '1 0 auto', pt: 0 }}>
-                  <S.CardInfo>
-                    <span style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>
-                        <strong>{item?.client?.name} - #{item?.id}</strong>
-                      </span>
-                    </span>
-                    <span>
-                      <strong>Delivery: </strong>
-                      {item.deliveryType === 'pickup' && 'Retirada'}
-                      {item.deliveryType === 'delivery' 
-                        && (item.address.freeformAddress || `${item.address.street}, N°${item.address.number}, ${item.address.district} - ${item.address.city}`)
-                      }
-                    </span>
-                    <span>
-                      <strong>Data: </strong>{' '}
+              <S.CardContentCustom>
+                <Box sx={{ flex: 1 }}>
+                  <Typography 
+                    variant="h6" 
+                    component="h3"
+                    sx={{ 
+                      fontWeight: 600,
+                      mb: 1,
+                      fontSize: '1.1rem',
+                      lineHeight: 1.3,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}
+                  >
+                    {item?.client?.name} - #{item?.id}
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                        Delivery:
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                        {item.deliveryType === 'pickup' 
+                          ? 'Retirada' 
+                          : (item.address?.freeformAddress || `${item.address?.street || ''}, N°${item.address?.number || ''}, ${item.address?.district || ''} - ${item.address?.city || ''}`)
+                        }
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                        Data:
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                       {new Date(item.date).toLocaleString('pt-BR')}
-                    </span>
-                    <span style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>
-                        <strong>Total:</strong> {ApplicationUtils.formatPrice(item.total)}
-                      </span>
-                    </span>
-                  </S.CardInfo>
-                </S.CardContentCustom>
-              </Box>
-            </S.CardCustom>
-          );
-        })}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                        Total:
+                      </Typography>
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          fontWeight: 700,
+                          color: 'primary.main',
+                          fontSize: '1.25rem'
+                        }}
+                      >
+                        {ApplicationUtils.formatPrice(item.total)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </S.CardContentCustom>
+                </S.CardCustom>
+              </Grid>
+            );
+          })}
+        </Grid>
 
         {orders.length > 0 && (
           <Pagination
@@ -311,17 +375,17 @@ export default function Index() {
           />
         )}
 
-        {!orders.length && <div style={{ textAlign: 'center' }}>Sem pedidos!</div>}
+        {!orders.length && <div style={{ textAlign: 'center' }}>{t('orders.noOrders') || 'Sem pedidos!'}</div>}
       </S.ContainerMain>
 
       {currentOrder && (
         <Dialog open={openModalChangeStatus} onClose={modalChangeStatusClose}>
-          <DialogTitle>Pedido #{currentOrder.id}</DialogTitle>
+          <DialogTitle>{t('orders.orderDetails')} #{currentOrder.id}</DialogTitle>
           <DialogContent>
-            <DialogContentText>Atualize o status do pedido para refletir a situação atual do mesmo.</DialogContentText>
+            <DialogContentText>{t('orders.updateStatusDescription') || 'Atualize o status do pedido para refletir a situação atual do mesmo.'}</DialogContentText>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <Typography variant="h6">Novo status:</Typography>
+                <Typography variant="h6">{t('orders.newStatus')}</Typography>
                 <Select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}

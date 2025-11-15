@@ -1,69 +1,53 @@
-import { Button, Card } from '@mui/material';
-import { styled } from '@mui/system';
+import { Card } from '@mui/material';
+import { styled } from '@mui/material/styles';
 
-export const ContainerMain = styled(Card)({
-  display: 'grid',
-  flexWrap: 'wrap',
-  alignItems: 'end',
-  gap: '12x',
-  padding: '1.5rem 20px'
-});
+export const ContainerMain = styled(Card)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius * 2,
+  boxShadow: theme.shadows[3],
+  transition: 'all 0.3s ease-in-out',
+  overflow: 'visible',
+  marginBottom: theme.spacing(2),
+  '&:hover': {
+    boxShadow: theme.shadows[6],
+  },
+}));
 
 export const FilterContainer = styled('div')(({ theme }) => ({
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-  gap: '8px',
+  gridTemplateColumns: '1fr',
+  gap: theme.spacing(2),
+  width: '100%',
 
-  '.grid-item': {
-    backgroundColor: '#ddd',
-    padding: '20px',
-    textAlign: 'center',
-  },
-
-  '@media screen and (min-width: 600px)': {
+  [theme.breakpoints.up('sm')]: {
     gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: theme.spacing(2.5),
   },
 
-  '@media screen and (min-width: 900px)': {
+  [theme.breakpoints.up('md')]: {
     gridTemplateColumns: 'repeat(3, 1fr)',
-  },
-  alignItems: 'end',
-
-  '& > *': {
-    margin: 0,
+    gap: theme.spacing(3),
   },
 
-  label: {
-    fontSize: 'small'
+  [theme.breakpoints.up('lg')]: {
+    gridTemplateColumns: 'repeat(4, 1fr)',
   },
-  input: {
-    padding: '8px',
-    marginRight: '4px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    width: '100%',
-  },
-  select: {
-    height: '35px',
-    padding: '4px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    marginRight: '8px',
-    width: '100%',
-  }
 }));
 
-export const ContainerButton = styled('div')({
-  marginTop: 16,
+export const ContainerButton = styled('div')(({ theme }) => ({
+  marginTop: theme.spacing(3),
   display: 'flex',
   flexWrap: 'wrap',
   alignItems: 'center',
-  justifyContent: 'end',
-  gap: '8px',
+  justifyContent: 'flex-end',
+  gap: theme.spacing(1.5),
   width: '100%',
-});
-
-export const ButtonFilter = styled(Button)({
-  height: 35,
-  minWidth: 120
-});
+  paddingTop: theme.spacing(2),
+  borderTop: `1px solid ${theme.palette.divider}`,
+  
+  [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column-reverse',
+    '& > *': {
+      width: '100%',
+    },
+  },
+}));

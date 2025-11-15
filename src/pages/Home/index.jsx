@@ -25,12 +25,14 @@ import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import { ApplicationUtils } from 'utils/ApplicationUtils';
 import VerifyEmail from 'pages/Auth/VerifyEmail';
+import { useTranslation } from 'react-i18next';
 import * as S from './style';
 import Header from 'components/Header';
 import InstallPWAButton from 'components/InstallPWAButton';
 
 const Home = () => {
   const { company } = useContext(GlobalContext);
+  const { t } = useTranslation('admin');
   const apiService = new ApiService();
   const [barChartData, setBarChartData] = useState(null);
   const [doughnutChartData, setDoughnutChartData] = useState(null);
@@ -104,7 +106,7 @@ const Home = () => {
         labels: sortedDates,
         datasets: [
           {
-            label: 'Receita (R$)',
+            label: t('dashboard.revenueToday') + ' (R$)',
             data: sortedDates.map(date => weekOrdersByDate[date].revenue),
             borderColor: ApplicationUtils.convertHexToRgba(
               company?.custom?.colorSecondary || '#1976d2', 1
@@ -130,7 +132,7 @@ const Home = () => {
         labels: data.map(item => ApplicationUtils.formatDate(item.date, false, false)),
         datasets: [
           {
-            label: 'Pedidos',
+            label: t('dashboard.orders'),
             backgroundColor: ApplicationUtils.convertHexToRgba(
               company?.custom?.colorSecondary || '#1976d2', 0.7
             ) || 'rgba(25, 118, 210, 0.7)',
@@ -194,9 +196,9 @@ const Home = () => {
       console.log('[Frontend] Resposta recebida:', response.data);
       
       if (response.data.success) {
-        alert('✅ Relatório diário enviado com sucesso! Verifique seu WhatsApp.');
+        alert('✅ ' + t('dashboard.reportSent'));
       } else {
-        alert('❌ Erro ao enviar relatório: ' + (response.data.message || 'Erro desconhecido'));
+        alert('❌ ' + t('dashboard.reportError') + ': ' + (response.data.message || 'Erro desconhecido'));
       }
     } catch (error) {
       console.error('[Frontend] Erro completo:', error);
@@ -204,9 +206,9 @@ const Home = () => {
       
       const errorMessage = error.response?.data?.message || 
                           error.message || 
-                          'Erro ao enviar relatório diário. Verifique se o WhatsApp está cadastrado e se o serviço está disponível.';
+                          t('dashboard.reportError');
       
-      alert('❌ Erro ao enviar relatório: ' + errorMessage);
+      alert('❌ ' + t('dashboard.reportError') + ': ' + errorMessage);
     } finally {
       setSendingReport(false);
     }
@@ -241,15 +243,15 @@ const Home = () => {
               size="small" 
               onClick={() => window.location.href = '/settings/info?tab=1'}
             >
-              Preencher
+              {t('dashboard.fill')}
             </Button>
           }
         >
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-            Endereço não preenchido
+            {t('dashboard.addressNotFilled')}
           </Typography>
           <Typography variant="caption">
-            Para colocar sua loja online, é necessário preencher o endereço do seu negócio.
+            {t('dashboard.addressNotFilledDescription')}
           </Typography>
         </Alert>
       )}
@@ -261,10 +263,10 @@ const Home = () => {
           sx={{ mb: 3 }}
         >
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-            Slug da loja não configurado
+            {t('dashboard.storeSlugNotConfigured')}
           </Typography>
           <Typography variant="caption">
-            Para colocar sua loja online, é necessário configurar o slug da loja.
+            {t('dashboard.storeSlugNotConfiguredDescription')}
           </Typography>
         </Alert>
       )}
@@ -278,7 +280,7 @@ const Home = () => {
         flexWrap: 'wrap',
         gap: 1
       }}>
-        <Header title="Dashboard" />
+        <Header title={t('dashboard.title')} />
         
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
@@ -292,7 +294,7 @@ const Home = () => {
               width: { xs: 48, sm: 56 },
               height: { xs: 48, sm: 56 }
             }}
-            title="Enviar relatório diário via WhatsApp"
+            title={t('dashboard.sendDailyReport')}
           >
             <WhatsApp sx={{ fontSize: { xs: 24, sm: 28 } }} />
           </IconButton>
@@ -319,17 +321,17 @@ const Home = () => {
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
                 <AttachMoney sx={{ fontSize: { xs: 32, sm: 40 }, color: '#2e7d32' }} />
-                <Chip label="Hoje" size="small" color="success" />
+                <Chip label={t('dashboard.today')} size="small" color="success" />
               </Box>
               <Typography color="textSecondary" gutterBottom variant="body2" sx={{ textTransform: 'uppercase', fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>
-                Receita Hoje
+                {t('dashboard.revenueToday')}
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#2e7d32', fontSize: { xs: '1.5rem', sm: '2rem' }, wordBreak: 'break-word' }}>
                 {ApplicationUtils.formatPrice(dashboardStats.todayRevenue)}
               </Typography>
               <Typography variant="caption" color="textSecondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
                 <TrendingUp sx={{ fontSize: 14 }} />
-                {dashboardStats.todayOrders} pedidos
+                {dashboardStats.todayOrders} {t('dashboard.orders')}
               </Typography>
             </CardContent>
           </S.MetricCard>
@@ -340,17 +342,17 @@ const Home = () => {
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
                 <ShoppingCart sx={{ fontSize: { xs: 32, sm: 40 }, color: '#1976d2' }} />
-                <Chip label="Este Mês" size="small" color="primary" />
+                <Chip label={t('dashboard.thisMonth')} size="small" color="primary" />
               </Box>
               <Typography color="textSecondary" gutterBottom variant="body2" sx={{ textTransform: 'uppercase', fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>
-                Total de Pedidos
+                {t('dashboard.totalOrders')}
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#1976d2', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
                 {dashboardStats.monthOrders}
               </Typography>
               <Typography variant="caption" color="textSecondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
                 <TrendingUp sx={{ fontSize: 14 }} />
-                {dashboardStats.weekOrders} esta semana
+                {dashboardStats.weekOrders} {t('dashboard.thisWeek')}
               </Typography>
             </CardContent>
           </S.MetricCard>
@@ -361,16 +363,16 @@ const Home = () => {
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
                 <Restaurant sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ed6c02' }} />
-                <Chip label="Média" size="small" color="warning" />
+                <Chip label={t('dashboard.average')} size="small" color="warning" />
             </Box>
               <Typography color="textSecondary" gutterBottom variant="body2" sx={{ textTransform: 'uppercase', fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>
-                Ticket Médio
+                {t('dashboard.averageTicket')}
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#ed6c02', fontSize: { xs: '1.5rem', sm: '2rem' }, wordBreak: 'break-word' }}>
                 {ApplicationUtils.formatPrice(dashboardStats.averageTicket)}
               </Typography>
               <Typography variant="caption" color="textSecondary" sx={{ mt: 1 }}>
-                Por pedido
+                {t('dashboard.perOrder')}
               </Typography>
             </CardContent>
           </S.MetricCard>
@@ -382,20 +384,20 @@ const Home = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
                 <LocalShipping sx={{ fontSize: { xs: 32, sm: 40 }, color: '#9c27b0' }} />
                 <Chip 
-                  label={dashboardStats.pendingOrders > 0 ? `${dashboardStats.pendingOrders} pendentes` : 'Sem pendências'} 
+                  label={dashboardStats.pendingOrders > 0 ? `${dashboardStats.pendingOrders} ${t('dashboard.pending')}` : t('dashboard.noPending')} 
                   size="small" 
                   color={dashboardStats.pendingOrders > 0 ? 'error' : 'success'}
                   sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}
                 />
           </Box>
               <Typography color="textSecondary" gutterBottom variant="body2" sx={{ textTransform: 'uppercase', fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>
-                Pedidos Pendentes
+                {t('dashboard.pendingOrders')}
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#9c27b0', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
                 {dashboardStats.pendingOrders}
               </Typography>
               <Typography variant="caption" color="textSecondary" sx={{ mt: 1 }}>
-                {dashboardStats.deliveryRate.toFixed(1)}% são delivery
+                {dashboardStats.deliveryRate.toFixed(1)}% {t('dashboard.areDelivery')}
               </Typography>
             </CardContent>
           </S.MetricCard>
@@ -408,13 +410,13 @@ const Home = () => {
           <S.MetricCard>
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                Receita Semanal
+                {t('dashboard.weeklyRevenue')}
               </Typography>
               <Typography variant="h3" sx={{ fontWeight: 700, color: 'primary.main', mb: 1, fontSize: { xs: '1.75rem', sm: '2.5rem' }, wordBreak: 'break-word' }}>
                 {ApplicationUtils.formatPrice(dashboardStats.weekRevenue)}
               </Typography>
               <Typography variant="body2" color="textSecondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                {dashboardStats.weekOrders} pedidos realizados
+                {dashboardStats.weekOrders} {t('dashboard.ordersCompleted')}
               </Typography>
             </CardContent>
           </S.MetricCard>
@@ -424,13 +426,13 @@ const Home = () => {
           <S.MetricCard>
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                Receita Mensal
+                {t('dashboard.monthlyRevenue')}
               </Typography>
               <Typography variant="h3" sx={{ fontWeight: 700, color: 'success.main', mb: 1, fontSize: { xs: '1.75rem', sm: '2.5rem' }, wordBreak: 'break-word' }}>
                 {ApplicationUtils.formatPrice(dashboardStats.monthRevenue)}
               </Typography>
               <Typography variant="body2" color="textSecondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                {dashboardStats.monthOrders} pedidos realizados
+                {dashboardStats.monthOrders} {t('dashboard.ordersCompleted')}
               </Typography>
             </CardContent>
           </S.MetricCard>
@@ -443,7 +445,7 @@ const Home = () => {
           <Grid item xs={12} lg={8}>
             <S.StyledCard>
               <CardHeader 
-                title={<Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>Evolução da Receita (7 dias)</Typography>} 
+                title={<Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>{t('dashboard.revenueEvolution')}</Typography>} 
                 sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1, sm: 2 } }}
               />
               <CardContent sx={{ p: { xs: 1, sm: 3 }, pt: { xs: 0, sm: 1 } }}>
@@ -461,7 +463,7 @@ const Home = () => {
                         tooltip: {
                           callbacks: {
                             label: function(context) {
-                              return `Receita: ${ApplicationUtils.formatPrice(context.parsed.y)}`;
+                              return `${t('dashboard.revenueToday')}: ${ApplicationUtils.formatPrice(context.parsed.y)}`;
                             }
                           }
                         }
@@ -496,7 +498,7 @@ const Home = () => {
           <Grid item xs={12} lg={4}>
             <S.StyledCard>
               <CardHeader 
-                title={<Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>Top 5 Produtos</Typography>} 
+                title={<Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>{t('dashboard.topProducts')}</Typography>} 
                 sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1, sm: 2 } }}
               />
               <CardContent sx={{ p: { xs: 1, sm: 3 }, pt: { xs: 0, sm: 1 } }}>
@@ -532,7 +534,7 @@ const Home = () => {
       {barChartData && (
         <S.StyledCard sx={{ mb: { xs: 2, sm: 4 }, width: '100%', maxWidth: '100%' }}>
           <CardHeader 
-            title={<Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>Pedidos dos Últimos 7 Dias</Typography>} 
+            title={<Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>{t('dashboard.ordersLast7Days')}</Typography>} 
             sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1, sm: 2 } }}
           />
           <CardContent sx={{ p: { xs: 1, sm: 3 }, pt: { xs: 0, sm: 1 } }}>
@@ -590,7 +592,7 @@ const Home = () => {
         <DialogTitle sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1, sm: 2 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
             <QrCode2 sx={{ fontSize: { xs: 24, sm: 28 } }} />
-            <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>QR Code do Cardápio</Typography>
+            <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>{t('dashboard.qrcode')}</Typography>
           </Box>
         </DialogTitle>
         <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
@@ -610,7 +612,7 @@ const Home = () => {
               />
             </Box>
             <Typography variant="body1" color="textSecondary" align="center" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' }, px: 1 }}>
-              Aponte a câmera do seu celular para o QR Code para acessar o cardápio
+              {t('dashboard.qrcodeDescription')}
             </Typography>
             <Typography 
               variant="body2" 
@@ -629,7 +631,7 @@ const Home = () => {
         </DialogContent>
         <DialogActions sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 1, sm: 2 } }}>
           <Button onClick={() => setOpenQRDialog(false)} fullWidth sx={{ display: { xs: 'block', sm: 'inline-flex' } }}>
-            Fechar
+            {t('common.close')}
           </Button>
         </DialogActions>
       </Dialog>

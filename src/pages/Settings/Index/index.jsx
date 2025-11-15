@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from 'components/Header';
 import * as S from './style';
 
 const Settings = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('admin');
 
   useEffect(() => {
     // Se estiver em /settings sem subrota, redireciona para a primeira opção
@@ -18,10 +20,11 @@ const Settings = () => {
   const getTitle = () => {
     const path = location.pathname.split('/').pop();
     const titles = {
-      'delivery': 'Delivery',
-      'info': 'Dados'
+      'delivery': t('settings.delivery'),
+      'info': t('settings.info'),
+      'language': t('settings.language')
     };
-    return titles[path] || 'Configurações';
+    return titles[path] || t('settings.title');
   };
 
   return (

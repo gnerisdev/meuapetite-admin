@@ -12,12 +12,13 @@ export const Container = styled('div')(({ theme }) => ({
 }));
 
 export const openedMixin = (theme) => ({
-  width: 240,
+  width: 256,
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.enteringScreen,
   }),
   overflowX: 'hidden',
+  overflowY: 'hidden',
   zIndex: theme.zIndex.drawer + 2
 });
 
@@ -40,13 +41,14 @@ export const DrawerHeader = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: theme.spacing(0, 1),
-  paddingLeft: '1.25rem',
-  gap: theme.spacing(1),
-  ...theme.mixins.toolbar,
+  padding: theme.spacing(1.25, 1),
+  gap: theme.spacing(0.75),
+  minHeight: '64px',
+  flexShrink: 0,
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
   [theme.breakpoints.down('sm')]: {
-    padding: theme.spacing(0.75, 0.5),
-    paddingLeft: theme.spacing(0.75),
+    padding: theme.spacing(1, 0.75),
     minHeight: '56px',
     gap: theme.spacing(0.5),
   },
@@ -68,9 +70,10 @@ export const AppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
+  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
   ...(open && {
-    marginLeft: 240,
-    '@media (min-width: 900px)': { width: `calc(100% - ${240}px)` },
+    marginLeft: 256,
+    '@media (min-width: 900px)': { width: `calc(100% - ${256}px)` },
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
@@ -81,32 +84,35 @@ export const AppBar = styled(MuiAppBar, {
 export const Drawer = styled(MuiDrawer, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
-  width: 240,
+  width: 256,
   paddingTop: 0,
   flexShrink: 0,
   whiteSpace: 'nowrap',
   boxSizing: 'border-box',
   '.MuiDrawer-paperAnchorDockedLeft': {
-    '::-webkit-scrollbar': {
-      width: '5px'
-    },              
-    '::-webkit-scrollbar-track': {
-      background: '#f1f1f1' 
-    },               
-    '::-webkit-scrollbar-thumb': {
-      background: '#888'
-    },              
-    '::-webkit-scrollbar-thumb:hover': {
-      background:'#555' 
-    },
+    overflowY: 'hidden !important',
+    overflowX: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    borderRight: `1px solid ${theme.palette.divider}`,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
   },
   ...(open && {
     ...openedMixin(theme),
-    '& .MuiDrawer-paper': openedMixin(theme),
+    '& .MuiDrawer-paper': {
+      ...openedMixin(theme),
+      overflowY: 'hidden !important',
+      display: 'flex',
+      flexDirection: 'column',
+    },
   }),
   ...(!open && {
     ...closedMixin(theme),
-    '& .MuiDrawer-paper': closedMixin(theme),
+    '& .MuiDrawer-paper': {
+      ...closedMixin(theme),
+      overflowY: 'hidden !important',
+    },
   }),
 }));
 
@@ -128,13 +134,25 @@ export const WrapperIntro = styled('div')(({ theme }) => ({
 
 export const MenuItem = styled(ListItem)(({ theme, open }) => ({
   display: 'block',
+  padding: 0,
+  marginBottom: theme.spacing(0.125),
   '&.active-item': {
-    background: 'rgba(0, 0, 0, 0.04)',
-    borderLeft: `4px solid ${theme.palette.secondary.main}`,
+    background: theme.palette.mode === 'dark' 
+      ? 'rgba(255, 255, 255, 0.08)' 
+      : 'rgba(25, 118, 210, 0.08)',
+    borderLeft: `3px solid ${theme.palette.primary.main}`,
     '[role="button"]': {
-      marginLeft: open ? '-18px' : '-6' 
+      marginLeft: '0',
+      fontWeight: 600,
+      color: theme.palette.primary.main,
     }
-  }
+  },
+  '&:hover:not(.active-item)': {
+    backgroundColor: theme.palette.mode === 'dark' 
+      ? 'rgba(255, 255, 255, 0.04)' 
+      : 'rgba(0, 0, 0, 0.04)',
+  },
+  transition: 'all 0.2s ease-in-out',
 }));
 
 export const ButtonToggle = styled(Button)(({ theme, thememode }) => ({
@@ -146,9 +164,31 @@ export const ButtonToggle = styled(Button)(({ theme, thememode }) => ({
 }));
 
 export const ListItemButtonCustom = styled(ListItemButton)(({ theme, open }) => ({
-  minHeight: 48,
-  justifyContent: open ? 'initial' : 'center', 
-  marginLeft: open ? -16 : 0
+  minHeight: 44,
+  padding: theme.spacing(0.875, 1.25),
+  justifyContent: open ? 'flex-start' : 'center', 
+  marginLeft: 0,
+  borderRadius: theme.spacing(1),
+  margin: theme.spacing(0.125, 0.75),
+  gap: theme.spacing(1.25),
+  transition: 'all 0.2s ease-in-out',
+  '&:hover': {
+    backgroundColor: theme.palette.mode === 'dark' 
+      ? 'rgba(255, 255, 255, 0.06)' 
+      : 'rgba(0, 0, 0, 0.06)',
+  },
+  '& .MuiListItemIcon-root': {
+    minWidth: open ? '36px' : 'auto',
+    justifyContent: 'center',
+    color: 'inherit',
+    fontSize: '1.1rem',
+  },
+  '& .MuiListItemText-primary': {
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    letterSpacing: '0.01em',
+    lineHeight: 1.4,
+  },
 }));
 
 export const PaperMenuCustom = styled(Paper)(({ theme }) => ({

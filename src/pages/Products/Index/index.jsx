@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { EditIcon, ContentCopyIcon, DeleteIcon, MoreVertIcon, CheckCircleIcon, CancelIcon } from 'components/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Button, 
   Pagination, 
@@ -19,6 +19,7 @@ import {
   Tooltip
 } from '@mui/material';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+import { useTranslation } from 'react-i18next';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import Header from 'components/Header';
@@ -26,29 +27,11 @@ import BackdropLoading from 'components/BackdropLoading';
 import Filter from 'components/Filter';
 import * as S from './style';
 
-
-const filters = [
-  {
-    name: 'searchTerm',
-    label: 'Buscar por produto',
-    placeholder: 'Buscar produtos...',
-    type: 'text'
-  },  
-  {
-    name: 'status',
-    label: 'Status',
-    placeholder: 'Todos',
-    type: 'select',
-    options: [
-      { value: true, label: 'Ativo' }, 
-      { value: false, label: 'Inativo' }, 
-    ]
-  }
-];
-
 const Index = () => {
+  const { t } = useTranslation('admin');
   const apiService = new ApiService();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast, company } = useContext(GlobalContext);
   const [products, setProducts] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
@@ -56,14 +39,39 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState({
+    status: searchParams.get('status') || '',
+    searchTerm: searchParams.get('search') || '',
+    category: searchParams.get('filterCategory') || ''
+  });
   const [categories, setCategories] = useState([]);
+
+  const filters = [
+    {
+      name: 'searchTerm',
+      label: t('products.search'),
+      placeholder: t('products.searchPlaceholder'),
+      type: 'text'
+    },  
+    {
+      name: 'status',
+      label: t('orders.status'),
+      placeholder: t('common.all'),
+      type: 'select',
+      options: [
+        { value: true, label: t('products.active') }, 
+        { value: false, label: t('products.inactive') }, 
+      ]
+    }
+  ];
 
   const getProducts = async () => {
     try {
-      setLoading('Carregando...');
+      setLoading(t('common.loading'));
 
-      let url = `/admin/products?page=1`;
+      // Obter página da URL ou usar 1 como padrão
+      const pageFromUrl = searchParams.get('page') || '1';
+      let url = `/admin/products?page=${pageFromUrl}`;
 
       if (filter.status) {
         url += `&status=${encodeURIComponent(filter.status)}`;
@@ -81,11 +89,12 @@ const Index = () => {
 
       setProducts(data.products);
       setTotalPages(data.totalPages);
+      // Pagination do MUI usa base 1, então usar data.page diretamente
       setPage(data.page);
       window.scrollTo(0, 0);
     } catch (error) {
       console.log(error);
-      toast.error('Não foi possível obter os produtos');
+      toast.error(t('common.getProductsError'));
     } finally {
       setLoading(null);
     }
@@ -93,16 +102,25 @@ const Index = () => {
 
   const changePage = async (e, value) => {
     try {
-      setLoading('Carregando...');
-      const { data } = await apiService.get(`/admin/products?page=${value}`);
-
-      setProducts(data.products);
-      setTotalPages(data.totalPages);
-      setPage(data.page);
-      window.scrollTo(0, 0);
+      setLoading(t('common.loading'));
+      
+      // Atualizar URL com a nova página e manter filtros
+      const params = new URLSearchParams();
+      params.set('page', value);
+      
+      if (filter.status) {
+        params.set('status', filter.status);
+      }
+      if (filter.searchTerm) {
+        params.set('search', filter.searchTerm);
+      }
+      if (filter.category) {
+        params.set('filterCategory', filter.category);
+      }
+      
+      navigate(`/products?${params.toString()}`, { replace: true });
     } catch (error) {
-      toast.error('Não foi possível mudar de página');
-    } finally {
+      toast.error(t('common.pageChangeError'));
       setLoading(null);
     }
   };
@@ -110,12 +128,12 @@ const Index = () => {
   const deleteProduct = async (id) => {
     handleCloseConfirm();
     try {
-      setLoading('Aguarde...');
+      setLoading(t('common.wait'));
       const { data } = await apiService.delete(`/admin/products/${id}/${company._id}/${page}`);
       setProducts(data.products);
-      toast.success('Produto excluído!');
+      toast.success(t('products.deleteSuccess'));
     } catch (e) {
-      toast.error('Não foi possível excluir o produto!');
+      toast.error(t('common.deleteProductError'));
     } finally {
       setLoading(false);
     }
@@ -131,7 +149,7 @@ const Index = () => {
     setOpenConfirm(false);
   };
 
-  const toUpdate = (id) => navigate('/products/update/' + id);
+  const toUpdate = (id) => navigate('/products/update/' + id, { state: { fromPage: page, filters: filter } });
 
   const toDuplicate = (product) => {
     return navigate('/products/create/', { state: { product, duplicate: true } });
@@ -144,11 +162,31 @@ const Index = () => {
     } catch (e) { }
   };
 
-  const getFilters = async (filter) => setFilter(filter);
+  const getFilters = async (filter) => {
+    setFilter(filter);
+    // Atualizar URL com os novos filtros, mantendo a página atual
+    const params = new URLSearchParams();
+    const currentPage = searchParams.get('page') || '1';
+    params.set('page', currentPage);
+    
+    if (filter.status !== undefined && filter.status !== '') {
+      params.set('status', filter.status);
+    }
+    
+    if (filter.searchTerm) {
+      params.set('search', filter.searchTerm);
+    }
+    
+    if (filter.category) {
+      params.set('filterCategory', filter.category);
+    }
+    
+    navigate(`/products?${params.toString()}`, { replace: true });
+  };
 
   useEffect(() => {
     getProducts();
-  }, [filter]);
+  }, [filter, searchParams]);
 
   useEffect(() => {
     getCategories();
@@ -157,8 +195,8 @@ const Index = () => {
   return (
     <Box sx={{ width: '100%' }}>
       <Header
-        title="Produtos"
-        buttonText="Novo produto"
+        title={t('products.title')}
+        buttonText={t('products.newProduct')}
         buttonClick={() => navigate('create')}
         back={-1}
       />
@@ -168,8 +206,8 @@ const Index = () => {
           ...filters,
           {
             name: 'category',
-            label: 'Categoria',
-            placeholder: 'Todas categoria',
+            label: t('products.category'),
+            placeholder: t('common.all') + ' ' + t('products.category').toLowerCase(),
             type: 'select',
             options: categories.map(item => 
               ({ value: item._id, label: item.title })
@@ -178,6 +216,36 @@ const Index = () => {
         ]}
         onApplyFilters={getFilters}
       />
+
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end', 
+        mb: 3, 
+        px: 2,
+        mt: 4
+      }}>
+        <Button
+          variant="outlined"
+          color="primary"
+          size="medium"
+          startIcon={<i className="fas fa-sort-amount-down"></i>}
+          onClick={() => navigate('/ordering')}
+          sx={{ 
+            textTransform: 'none',
+            px: 3,
+            py: 1,
+            borderRadius: 2,
+            fontSize: '0.95rem',
+            fontWeight: 500,
+            '&:hover': {
+              transform: 'translateY(-1px)',
+            },
+            transition: 'all 0.2s ease'
+          }}
+        >
+          Ordenar Exibição
+        </Button>
+      </Box>
 
       <S.ContainerProducts>
         <Grid container spacing={3}>
@@ -215,7 +283,7 @@ const Index = () => {
                                 sx={{ gap: 1 }}
                               >
                                 <EditIcon fontSize="small" color="primary" />
-                                Editar
+                                {t('common.edit')}
                               </MenuItem>
                               <MenuItem 
                                 onClick={() => {
@@ -225,7 +293,7 @@ const Index = () => {
                                 sx={{ gap: 1 }}
                               >
                                 <ContentCopyIcon fontSize="small" color="action" />
-                                Duplicar
+                                {t('common.duplicate') || 'Duplicar'}
                               </MenuItem>
                               <MenuItem
                                 onClick={() => {
@@ -235,7 +303,7 @@ const Index = () => {
                                 sx={{ gap: 1, color: 'error.main' }}
                               >
                                 <DeleteIcon fontSize="small" />
-                                Excluir
+                                {t('common.delete')}
                               </MenuItem>
                             </Menu>
                           </>
@@ -245,7 +313,7 @@ const Index = () => {
                     <S.StatusBadge>
                       <Chip
                         icon={item.isActive ? <CheckCircleIcon /> : <CancelIcon />}
-                        label={item.isActive ? 'Ativo' : 'Inativo'}
+                        label={item.isActive ? t('products.active') : t('products.inactive')}
                         size="small"
                         color={item.isActive ? 'success' : 'default'}
                         sx={{ 
@@ -280,7 +348,7 @@ const Index = () => {
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                          Preço:
+                          {t('products.price')}:
                         </Typography>
                         <Typography 
                           variant="h6" 
@@ -297,7 +365,7 @@ const Index = () => {
                       {item.category?.title && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                            Categoria:
+                            {t('products.category')}:
                           </Typography>
                           <Chip 
                             label={item.category.title} 
@@ -332,10 +400,10 @@ const Index = () => {
             📦
           </Box>
           <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>
-            Nenhum produto encontrado
+            {t('products.noProductsFound') || 'Nenhum produto encontrado'}
           </Typography>
           <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3, maxWidth: '400px' }}>
-            Não há produtos cadastrados no momento. Para adicionar um novo produto, clique no botão "Novo produto" acima.
+            {t('products.noProductsDescription') || 'Não há produtos cadastrados no momento. Para adicionar um novo produto, clique no botão "Novo produto" acima.'}
           </Typography>
           <Button 
             variant="contained" 
@@ -350,7 +418,7 @@ const Index = () => {
               fontWeight: 600
             }}
           >
-            Criar primeiro produto
+            {t('products.createFirst') || 'Criar primeiro produto'}
           </Button>
         </S.EmptyState>
       )}
@@ -372,11 +440,11 @@ const Index = () => {
           pb: 1
         }}>
           <DeleteIcon color="error" />
-          Excluir produto?
+          {t('products.deleteConfirm') || 'Excluir produto?'}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ fontSize: '0.95rem' }}>
-            Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.
+            {t('products.deleteConfirmMessage') || 'Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.'}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 1 }}>
@@ -385,7 +453,7 @@ const Index = () => {
             variant="outlined"
             sx={{ textTransform: 'none' }}
           >
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button 
             onClick={() => deleteProduct(itemToDelete)} 
@@ -395,7 +463,7 @@ const Index = () => {
             sx={{ textTransform: 'none' }}
             startIcon={<DeleteIcon />}
           >
-            Excluir
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

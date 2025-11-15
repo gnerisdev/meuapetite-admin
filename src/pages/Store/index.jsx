@@ -12,6 +12,9 @@ import {
 import { ShoppingCartIcon, CheckCircleIcon, CancelIcon, InfoIcon, AccessTimeIcon } from 'components/icons';
 import { ApiService } from 'services/api.service';
 import { useVisitorTracking } from 'hooks/useVisitorTracking';
+import { useTranslation } from 'react-i18next';
+import { useI18n } from 'contexts/I18nContext';
+import LanguageSelector from 'components/LanguageSelector';
 import ProductModal from './components/ProductModal';
 import Cart from './components/Cart';
 import StoreInfoModal from './components/StoreInfoModal';
@@ -20,7 +23,54 @@ import * as S from './style';
 
 const Store = () => {
   const { slug, orderId } = useParams();
+  const { storeLanguage } = useI18n();
+  const { t, i18n } = useTranslation('store');
   const apiService = new ApiService(false); // Não autenticado
+  
+  // Obter idioma preferido do usuário ou usar o padrão do admin
+  const getUserStoreLanguage = () => {
+    const userLanguage = localStorage.getItem('storeUserLanguage');
+    return userLanguage || storeLanguage || 'pt-BR';
+  };
+
+  const [currentStoreLanguage, setCurrentStoreLanguage] = useState(getUserStoreLanguage());
+  
+  // Mudar idioma da loja quando storeLanguage (padrão do admin) ou preferência do usuário mudar
+  useEffect(() => {
+    const userLanguage = localStorage.getItem('storeUserLanguage');
+    const langToUse = userLanguage || storeLanguage || 'pt-BR';
+    setCurrentStoreLanguage(langToUse);
+    i18n.changeLanguage(langToUse);
+    i18n.loadNamespaces('store');
+  }, [storeLanguage, i18n]);
+
+  // Escutar mudanças no idioma quando o usuário mudar
+  useEffect(() => {
+    const handleLanguageChange = (e) => {
+      const newLang = e.language || localStorage.getItem('storeUserLanguage') || storeLanguage || 'pt-BR';
+      setCurrentStoreLanguage(newLang);
+      i18n.changeLanguage(newLang);
+      i18n.loadNamespaces('store');
+    };
+    
+    // Escutar eventos customizados (mesma aba)
+    window.addEventListener('storeLanguageChanged', handleLanguageChange);
+    // Escutar eventos de storage (outras abas)
+    const handleStorageChange = (e) => {
+      if (e.key === 'storeUserLanguage') {
+        const newLang = e.newValue || storeLanguage || 'pt-BR';
+        setCurrentStoreLanguage(newLang);
+        i18n.changeLanguage(newLang);
+        i18n.loadNamespaces('store');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storeLanguageChanged', handleLanguageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [storeLanguage, i18n]);
   const [store, setStore] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -124,7 +174,15 @@ const Store = () => {
     
     const time = new Date();
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const dayNames = [
+      t('store.sunday'),
+      t('store.monday'),
+      t('store.tuesday'),
+      t('store.wednesday'),
+      t('store.thursday'),
+      t('store.friday'),
+      t('store.saturday')
+    ];
     const today = days[time.getDay()];
     const todayName = dayNames[time.getDay()];
     const hours = store.settings.openingHours[today];
@@ -133,9 +191,9 @@ const Store = () => {
     
     let text = '';
     if (hours.alwaysClosed) {
-      text = 'Fechado';
+      text = t('store.closed');
     } else if (hours.alwaysOpen) {
-      text = '24 horas';
+      text = t('store.open24h');
     } else {
       text = `${hours.open} - ${hours.close}`;
     }
@@ -154,8 +212,8 @@ const Store = () => {
   if (!store) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="h5">Loja não encontrada</Typography>
-        <Typography variant="body2" color="text.secondary">A loja que você está procurando não existe ou não está disponível.</Typography>
+        <Typography variant="h5">{t('store.notFound')}</Typography>
+        <Typography variant="body2" color="text.secondary">{t('store.notFoundDescription')}</Typography>
       </Box>
     );
   }
@@ -218,11 +276,14 @@ const Store = () => {
             </Box>
             
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+              {/* Seletor de Idioma */}
+              <LanguageSelector forStore={true} />
+              
               {/* Status e Horário */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Chip
                   icon={store.isOpen ? <CheckCircleIcon sx={{ color: '#00a859 !important' }} /> : <CancelIcon />}
-                  label={store.isOpen ? 'Aberto' : 'Fechado'}
+                  label={store.isOpen ? t('store.open') || 'Aberto' : t('store.closed')}
                   sx={{
                     bgcolor: store.isOpen ? '#e8f5e9' : '#ffebee',
                     color: store.isOpen ? '#00a859' : '#c62828',
@@ -266,7 +327,7 @@ const Store = () => {
                   },
                 }}
               >
-                Informações
+                {t('store.info')}
               </Button>
             </Box>
           </Box>

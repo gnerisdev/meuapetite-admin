@@ -1,10 +1,12 @@
 import { useRoutes } from 'react-router-dom';
 import { GlobalContext, GlobalProvider } from 'contexts/Global';
+import { I18nProvider } from 'contexts/I18nContext';
 import authRoutes from 'routes/authRoutes';
 import adminRoutes from 'routes/adminRoutes';
 import { useContext } from 'react';
 import BackdropLoading from 'components/BackdropLoading';
 import Store from 'pages/Store';
+import './i18n/config';
 
 const GlobalStyles = () => (
   <style>
@@ -53,8 +55,10 @@ const Routes = () => {
 const App = () => {
   return (
     <GlobalProvider>
-      <GlobalStyles />
-      <Routes />
+      <I18nProvider>
+        <GlobalStyles />
+        <Routes />
+      </I18nProvider>
     </GlobalProvider>
   );
 };

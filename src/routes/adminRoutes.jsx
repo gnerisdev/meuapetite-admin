@@ -3,6 +3,10 @@ import Address from 'pages/Address/Index';
 import Product from 'pages/Products/Index';
 import ProductCreate from 'pages/Products/Create';
 import ProductUpdate from 'pages/Products/Update';
+import Producers from 'pages/Producers/Index';
+import ProducersCreate from 'pages/Producers/Create';
+import ProducersUpdate from 'pages/Producers/Update';
+import Ordering from 'pages/Ordering/Index';
 import Orders from 'pages/Orders/Index';
 import Appearance from 'pages/Appearance/Index';
 import Home from 'pages/Home';
@@ -12,6 +16,7 @@ import Settings from 'pages/Settings/Index';
 import Settings_Delivery from 'pages/Settings/Settings_Delivery';
 import Settings_OpeningHours from 'pages/Settings/Settings_OpeningHours';
 import Settings_Info from 'pages/Settings/Settings_Info';
+import Settings_Language from 'pages/Settings/Settings_Language';
 import OpeningHours from 'pages/OpeningHours/Index';
 import Payment_InDelivery from 'pages/PaymentMethod/Payment_InDelivery';
 import Financial from 'pages/Financial/Index';
@@ -32,6 +37,12 @@ const adminRoutes = [
       { path: 'products', element: <Product /> },
       { path: 'products/create', element: <ProductCreate /> },
       { path: 'products/update/:id', element: <ProductUpdate /> },
+
+      { path: 'producers', element: <Producers /> },
+      { path: 'producers/create', element: <ProducersCreate /> },
+      { path: 'producers/update/:id', element: <ProducersUpdate /> },
+
+      { path: 'ordering', element: <Ordering /> },
 
       { path: 'orders', element: <Orders /> },
 
@@ -61,6 +72,7 @@ const adminRoutes = [
           { path: 'openinghours', element: <Settings_OpeningHours /> },
           { path: 'delivery', element: <Settings_Delivery /> },
           { path: 'info', element: <Settings_Info /> },
+          { path: 'language', element: <Settings_Language /> },
         ],
       },
 

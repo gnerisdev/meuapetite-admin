@@ -53,9 +53,11 @@ export const CardCustom = styled(Card)(({ theme }) => ({
   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   overflow: 'hidden',
+  border: '1px solid rgba(0, 0, 0, 0.08)',
   '&:hover': {
     transform: 'translateY(-4px)',
     boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+    borderColor: 'rgba(0, 0, 0, 0.12)',
     '& .card-media-wrapper': {
       '&::after': {
         opacity: 1,

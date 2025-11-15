@@ -24,13 +24,16 @@ import { MenuIcon, ChevronLeftIcon, ChevronRightIcon, StoreIcon, StorefrontIcon 
 import { Avatar, CardHeader, styled } from '@mui/material';
 import { GlobalContext } from 'contexts/Global';
 import { ApiService } from 'services/api.service';
-import { menuItems } from './items';
+import { useTranslation } from 'react-i18next';
+import { menuItems, useMenuItems } from './items';
 import * as S from './style';
 
 const MiniDrawer = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('admin');
+  const menuItemsTranslated = useMenuItems();
   const [open, setOpen] = useState(false);
   const [openMenuProfile, setOpenMenuProfile] = useState(false);
   const [openSettingsMenu, setOpenSettingsMenu] = useState(false);
@@ -50,7 +53,15 @@ const MiniDrawer = () => {
     if (window.innerWidth <= 900) handleDrawerClose();
     setRouteActive(link);
     navigate(link);
-    setOpenSettingsMenu(false);
+    // Não fechar o menu de configurações se estiver navegando para outra página de configurações
+    const isConfigLink = link === '/settings' || 
+                         link === '/appearance' || 
+                         link === '/payment-method' ||
+                         link.startsWith('/settings/') ||
+                         link.startsWith('/payment-method/');
+    if (!isConfigLink) {
+      setOpenSettingsMenu(false);
+    }
   };
 
   const toggleoMenuProfile = () => setOpenMenuProfile(!openMenuProfile);
@@ -99,7 +110,7 @@ const MiniDrawer = () => {
 
   const menuItemsProfile = [
     {
-      label: 'Visitar cardápio',
+      label: t('menu.visitStore'),
       iconClass: 'fa-eye',
       action: () => {
         const baseUrl = getMenuBaseUrl() || window.location.origin;
@@ -108,7 +119,7 @@ const MiniDrawer = () => {
       }
     },
     {
-      label: 'Termos de uso e privacidade',
+      label: t('menu.terms'),
       iconClass: 'fa-file-alt',
       action: () => {
         navigate('terms');
@@ -116,7 +127,7 @@ const MiniDrawer = () => {
       }
     },
     {
-      label: 'Sair',
+      label: t('menu.logout'),
       iconClass: 'fa-sign-out-alt',
       action: () => {
         localStorage.removeItem('_id');
@@ -129,33 +140,59 @@ const MiniDrawer = () => {
   const CustomCardHeader = styled(CardHeader)`&& .css-1ssile9-MuiCardHeader-avatar { margin: 0 }`;
 
   useEffect(() => {
-    const handleResize = () => {
+    const adjustButtonPosition = () => {
       const isWidthGreaterThan900 = window.innerWidth > 899;
-      const appMain = document.querySelector('#app-main');
       const buttonFloat = document.querySelector('#button-float');
-      console.log(isWidthGreaterThan900);
+      const drawerWidth = 256; // Largura do drawer quando aberto
 
-      if (buttonFloat && appMain && isWidthGreaterThan900 && open) {
-        if (open) {
-          buttonFloat.style.left = `calc(50% + ${((256 / window.innerWidth) * 100)}% - ${buttonFloat.clientWidth / 1.2}px)`;
-          buttonFloat.style.transform = 'initial';
-        } else {
+      if (buttonFloat) {
+        if (isWidthGreaterThan900 && open) {
+          // Quando o drawer está aberto, centralizar na área visível
+          // O centro da área visível = drawerWidth + (largura total - drawerWidth) / 2
+          const visibleAreaCenter = drawerWidth + (window.innerWidth - drawerWidth) / 2;
+          buttonFloat.style.left = `${visibleAreaCenter}px`;
           buttonFloat.style.transform = 'translateX(-50%)';
+        } else {
+          // Quando o drawer está fechado ou em telas menores, centralizar normalmente
           buttonFloat.style.left = '50%';
+          buttonFloat.style.transform = 'translateX(-50%)';
         }
-      } else if ((buttonFloat && appMain) && isWidthGreaterThan900 === false) {
-        buttonFloat.style.transform = 'translateX(-50%)';
-        buttonFloat.style.left = '50%';
       }
     };
 
-    handleResize();
+    // Ajustar imediatamente
+    adjustButtonPosition();
+
+    // Verificar novamente após um pequeno delay para garantir que o botão foi montado
+    const timeoutId = setTimeout(adjustButtonPosition, 100);
+    
+    // Verificar periodicamente se o botão foi montado (útil quando navega para uma nova página)
+    const intervalId = setInterval(() => {
+      const buttonFloat = document.querySelector('#button-float');
+      if (buttonFloat) {
+        adjustButtonPosition();
+        clearInterval(intervalId); // Parar de verificar quando o botão for encontrado
+      }
+    }, 200);
+
+    // Limpar após 2 segundos para não verificar indefinidamente
+    const cleanupInterval = setTimeout(() => {
+      clearInterval(intervalId);
+    }, 2000);
+
+    const handleResize = () => {
+      adjustButtonPosition();
+    };
 
     window.addEventListener('resize', handleResize);
+    
     return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+      clearTimeout(cleanupInterval);
       window.removeEventListener('resize', handleResize);
     };
-  }, [open]);
+  }, [open, location.pathname]);
 
 
   useEffect(() => {
@@ -163,7 +200,7 @@ const MiniDrawer = () => {
     const route = '/' + currentRoute[1];
     setRouteActive(route);
     
-    // Se não estiver em uma rota de configurações, fechar o dropdown
+    // Verificar se está em uma rota de configurações
     const isConfigRoute = route === '/settings' || 
                          route === '/appearance' || 
                          route === '/payment-method' ||
@@ -171,8 +208,9 @@ const MiniDrawer = () => {
                          route.startsWith('/settings/') ||
                          route.startsWith('/payment-method/');
     
-    if (!isConfigRoute) {
-      setOpenSettingsMenu(false);
+    // Se estiver em uma rota de configurações, manter o dropdown aberto
+    if (isConfigRoute) {
+      setOpenSettingsMenu(true);
     }
   }, [location.pathname]);
 
@@ -282,23 +320,43 @@ const MiniDrawer = () => {
           </IconButton>
         </S.DrawerHeader>
 
-            <List sx={{ p: 0 }}>
-          {menuItems.map((item, index) => {
+        <Box sx={{ 
+          flex: 1, 
+          overflowY: 'hidden',
+          overflowX: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}>
+          <List sx={{ 
+            p: 0, 
+            pt: 0.5,
+            pb: 1,
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            minHeight: 0,
+          }}>
+            {menuItemsTranslated.map((item, index) => {
             // Verificar se é o item de Configurações
             const isSettingsItem = item.link === '/settings';
             // Verificar se a rota atual é uma das rotas de configurações
             const isSettingsRoute = routeActive === '/settings' || 
                                    routeActive === '/appearance' || 
                                    routeActive === '/payment-method' ||
-                                   routeActive.startsWith('/settings/') ||
-                                   routeActive.startsWith('/payment-method/');
+                                   routeActive === '/opening-hours' ||
+                                   routeActive === '/settings/language' ||
+                                   location.pathname === '/appearance' ||
+                                   location.pathname.startsWith('/settings/') ||
+                                   location.pathname.startsWith('/payment-method/');
             
             return (
               <Box key={index}>
                 <S.MenuItem
                   disablePadding
                   open={open} 
-                  className={routeActive === item.link || (isSettingsItem && isSettingsRoute) ? 'active-item' : ''}
+                  className={routeActive === item.link || location.pathname === item.link || (isSettingsItem && isSettingsRoute) ? 'active-item' : ''}
                   onClick={() => {
                     if (isSettingsItem) {
                       toggleSettingsMenu();
@@ -310,7 +368,7 @@ const MiniDrawer = () => {
                   <S.ListItemButtonCustom open={open}>
                     <ListItemIcon 
                       title={item.text} 
-                      sx={{ justifyContent: 'center' }}
+                      sx={{ justifyContent: 'center', minWidth: '36px' }}
                     >
                       <item.Icon />
                     </ListItemIcon>
@@ -318,28 +376,27 @@ const MiniDrawer = () => {
                     {isSettingsItem && open && (
                       <span 
                         className={`fas fa-angle-${openSettingsMenu ? 'up' : 'down'}`}
-                        style={{ marginLeft: 'auto', opacity: open ? 1 : 0 }}
+                        style={{ marginLeft: 'auto', opacity: open ? 1 : 0, fontSize: '0.875rem' }}
                       />
                     )}
                   </S.ListItemButtonCustom>
                 </S.MenuItem>
                 
                 {isSettingsItem && openSettingsMenu && open && (
-                  <List sx={{ pl: 4 }}>
+                  <List sx={{ pl: 0, pt: 0, pb: 0, m: 0 }}>
                     <S.MenuItem
                       disablePadding
-                      className={routeActive === '/appearance' ? 'active-item' : ''}
+                      className={routeActive === '/appearance' || location.pathname === '/appearance' ? 'active-item' : ''}
                       onClick={() => {
                         toLink('/appearance');
-                        setOpenSettingsMenu(false);
                       }}
                     >
-                      <S.ListItemButtonCustom open={open}>
-                        <ListItemIcon sx={{ justifyContent: 'center', minWidth: '40px' }}>
-                          <i className="fas fa-paint-brush"></i>
+                      <S.ListItemButtonCustom open={open} sx={{ pl: 4.5 }}>
+                        <ListItemIcon sx={{ justifyContent: 'center', minWidth: '36px' }}>
+                          <i className="fas fa-paint-brush" style={{ fontSize: '1rem' }}></i>
                         </ListItemIcon>
                         <ListItemText 
-                          primary="Aparência" 
+                          primary={t('settings.appearance')} 
                           sx={{ opacity: open ? 1 : 0, '& .MuiListItemText-primary': { fontSize: '0.875rem' } }} 
                         />
                       </S.ListItemButtonCustom>
@@ -347,18 +404,17 @@ const MiniDrawer = () => {
                     
                     <S.MenuItem
                       disablePadding
-                      className={routeActive === '/payment-method' ? 'active-item' : ''}
+                      className={routeActive === '/payment-method' || location.pathname.startsWith('/payment-method') ? 'active-item' : ''}
                       onClick={() => {
                         toLink('/payment-method');
-                        setOpenSettingsMenu(false);
                       }}
                     >
-                      <S.ListItemButtonCustom open={open}>
-                        <ListItemIcon sx={{ justifyContent: 'center', minWidth: '40px' }}>
-                          <i className="fas fa-credit-card"></i>
+                      <S.ListItemButtonCustom open={open} sx={{ pl: 4.5 }}>
+                        <ListItemIcon sx={{ justifyContent: 'center', minWidth: '36px' }}>
+                          <i className="fas fa-credit-card" style={{ fontSize: '1rem' }}></i>
                         </ListItemIcon>
                         <ListItemText 
-                          primary="Formas de pagamento" 
+                          primary={t('settings.payment')} 
                           sx={{ opacity: open ? 1 : 0, '& .MuiListItemText-primary': { fontSize: '0.875rem' } }} 
                         />
                       </S.ListItemButtonCustom>
@@ -366,18 +422,17 @@ const MiniDrawer = () => {
                     
                     <S.MenuItem
                       disablePadding
-                      className={routeActive === '/settings/delivery' ? 'active-item' : ''}
+                      className={routeActive === '/settings/delivery' || location.pathname === '/settings/delivery' ? 'active-item' : ''}
                       onClick={() => {
                         toLink('/settings/delivery');
-                        setOpenSettingsMenu(false);
                       }}
                     >
-                      <S.ListItemButtonCustom open={open}>
-                        <ListItemIcon sx={{ justifyContent: 'center', minWidth: '40px' }}>
-                          <i className="fas fa-truck"></i>
+                      <S.ListItemButtonCustom open={open} sx={{ pl: 4.5 }}>
+                        <ListItemIcon sx={{ justifyContent: 'center', minWidth: '36px' }}>
+                          <i className="fas fa-motorcycle" style={{ fontSize: '1rem' }}></i>
                         </ListItemIcon>
                         <ListItemText 
-                          primary="Delivery" 
+                          primary={t('settings.delivery')} 
                           sx={{ opacity: open ? 1 : 0, '& .MuiListItemText-primary': { fontSize: '0.875rem' } }} 
                         />
                       </S.ListItemButtonCustom>
@@ -385,18 +440,35 @@ const MiniDrawer = () => {
                     
                     <S.MenuItem
                       disablePadding
-                      className={routeActive === '/settings/info' ? 'active-item' : ''}
+                      className={routeActive === '/settings/info' || location.pathname === '/settings/info' ? 'active-item' : ''}
                       onClick={() => {
                         toLink('/settings/info');
-                        setOpenSettingsMenu(false);
                       }}
                     >
-                      <S.ListItemButtonCustom open={open}>
-                        <ListItemIcon sx={{ justifyContent: 'center', minWidth: '40px' }}>
-                          <i className="fas fa-user-shield"></i>
+                      <S.ListItemButtonCustom open={open} sx={{ pl: 4.5 }}>
+                        <ListItemIcon sx={{ justifyContent: 'center', minWidth: '36px' }}>
+                          <i className="fas fa-user-shield" style={{ fontSize: '1rem' }}></i>
                         </ListItemIcon>
                         <ListItemText 
-                          primary="Dados" 
+                          primary={t('settings.info')} 
+                          sx={{ opacity: open ? 1 : 0, '& .MuiListItemText-primary': { fontSize: '0.875rem' } }} 
+                        />
+                      </S.ListItemButtonCustom>
+                    </S.MenuItem>
+                    
+                    <S.MenuItem
+                      disablePadding
+                      className={routeActive === '/settings/language' || location.pathname === '/settings/language' ? 'active-item' : ''}
+                      onClick={() => {
+                        toLink('/settings/language');
+                      }}
+                    >
+                      <S.ListItemButtonCustom open={open} sx={{ pl: 4.5 }}>
+                        <ListItemIcon sx={{ justifyContent: 'center', minWidth: '36px' }}>
+                          <i className="fas fa-language" style={{ fontSize: '1rem' }}></i>
+                        </ListItemIcon>
+                        <ListItemText 
+                          primary={t('settings.language')} 
                           sx={{ opacity: open ? 1 : 0, '& .MuiListItemText-primary': { fontSize: '0.875rem' } }} 
                         />
                       </S.ListItemButtonCustom>
@@ -406,7 +478,8 @@ const MiniDrawer = () => {
           </Box>
             );
           })}
-        </List>
+          </List>
+        </Box>
       </S.Drawer>
     </S.Container>
   );

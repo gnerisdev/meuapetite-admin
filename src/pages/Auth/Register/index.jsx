@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { LockOutlinedIcon } from 'components/icons';
 import { ThemeProvider } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import BackdropLoading from 'components/BackdropLoading';

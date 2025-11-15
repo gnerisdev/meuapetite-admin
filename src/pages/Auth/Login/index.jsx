@@ -15,6 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import ImageIntro from 'assets/images/intro-login.webp';
+import { useTranslation } from 'react-i18next';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import BackdropLoading from 'components/BackdropLoading';
@@ -22,6 +23,7 @@ import * as S from './style';
 
 
 export default function Login() {
+  const { t } = useTranslation('admin');
   const apiService = new ApiService(false);
   const { toast } = useContext(GlobalContext);
   const [loading, setLoading] = useState(false);
@@ -68,17 +70,17 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     try {
-      setLoading('Aguarde...');
+      setLoading(t('common.wait'));
       e.preventDefault();
       let subscription = null;
 
-      if (!data.email) return toast.error('O Email não pode ficar em branco');
-      if (!data.password) return toast.error('A Senha não pode ficar em branco');
+      if (!data.email) return toast.error(t('auth.emailCannotBeBlank'));
+      if (!data.password) return toast.error(t('auth.passwordCannotBeBlank'));
 
       if (checkSuport()) {
         const isPermission = await requestNotificationPermission();
         if (!isPermission) {
-          toast.error('Por favor, conceda permissão de notificação para o funcionamento adequado do sistema.');
+          toast.error(t('auth.notificationPermissionRequired'));
         } else {
           subscription = await registerServiceWorker() || null;
         }
@@ -87,15 +89,15 @@ export default function Login() {
       const response = await apiService.post('/auth/login', { ...data, subscription });
 
       if (!response || !response.data) {
-        return toast.error('Erro de conexão. Verifique sua internet e tente novamente.');
+        return toast.error(t('auth.connectionError'));
       }
 
       if (!response.data.success) {
-        return toast.error(response.data.message || 'Erro ao fazer login. Tente novamente.');
+        return toast.error(response.data.message || t('auth.loginErrorGeneric'));
       }
 
       if (!response.data._id || !response.data.token) {
-        return toast.error('Dados de autenticação inválidos. Tente novamente.');
+        return toast.error(t('auth.invalidAuthData'));
       }
 
       localStorage.setItem('_id', JSON.stringify(response.data._id));
@@ -103,8 +105,7 @@ export default function Login() {
 
       if (!checkSuport()) {
         toast(
-          'Seu navegador não suporta notificações em tempo real.'
-          + 'Use o Google Chrome para acessar todas as funcionalidades do sistema.',
+          t('auth.browserNotSupported'),
           { icon: "⚠️" }
         );
 
@@ -113,22 +114,22 @@ export default function Login() {
         return document.location.href = '/home';
       }
     } catch (e) {
-      let errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      let errorMessage = t('auth.connectionError');
       
       // Tratamento específico para diferentes tipos de erro de rede
       if (e?.code === 'ECONNABORTED' || e?.message?.includes('timeout')) {
-        errorMessage = 'Tempo de conexão esgotado. Verifique sua internet e tente novamente.';
+        errorMessage = t('auth.timeoutError');
       } else if (e?.code === 'ERR_NETWORK' || e?.message?.includes('Network Error')) {
-        errorMessage = 'Erro de rede. Verifique se o servidor está acessível e sua conexão está ativa.';
+        errorMessage = t('auth.networkError');
       } else if (e?.response?.data?.message) {
         errorMessage = e.response.data.message;
       } else if (e?.message) {
         errorMessage = e.message;
       } else if (e?.response?.status) {
         if (e.response.status === 0) {
-          errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão.';
+          errorMessage = t('auth.serverConnectionError');
         } else {
-          errorMessage = `Erro ${e.response.status}. Tente novamente.`;
+          errorMessage = t('auth.errorWithStatus', { status: e.response.status });
         }
       }
       
@@ -150,13 +151,13 @@ export default function Login() {
           <Box sx={{ my: 8, mx: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}><LockOutlinedIcon /></Avatar>
 
-            <Typography component="h1" variant="h5">Login</Typography>
+            <Typography component="h1" variant="h5">{t('auth.login')}</Typography>
 
             <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
               <TextField
                 margin="normal"
                 fullWidth
-                label="Email"
+                label={t('auth.email')}
                 autoComplete="email"
                 onChange={e => setData({ ...data, email: e.target.value })}
                 value={data.email}
@@ -165,7 +166,7 @@ export default function Login() {
               <TextField
                 margin="normal"
                 fullWidth
-                label="Senha"
+                label={t('auth.password')}
                 type="password"
                 autoComplete="current-password"
                 onChange={e => setData({ ...data, password: e.target.value })}
@@ -174,19 +175,19 @@ export default function Login() {
 
               <FormControlLabel
                 control={<Checkbox value="remember" color="primary" />}
-                label="Lembrar de mim"
+                label={t('auth.rememberMe')}
               />
 
               <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-                Entrar
+                {t('auth.enter')}
               </Button>
 
               <Grid container>
                 <Grid item xs>
-                  <Link href="#" variant="body2">Esqueceu a senha?</Link>
+                  <Link href="#" variant="body2">{t('auth.forgotPassword')}</Link>
                 </Grid>
                 <Grid item>
-                  <Link href="/register" variant="body2">Cadastre-se</Link>
+                  <Link href="/register" variant="body2">{t('auth.signUp')}</Link>
                 </Grid>
               </Grid>
 
