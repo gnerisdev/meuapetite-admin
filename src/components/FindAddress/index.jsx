@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { IconButton, useMediaQuery } from '@mui/material';
+import { IconButton, useMediaQuery, Tabs, Tab, Box } from '@mui/material';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useTheme } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
 import AddressCep from './AddressCep';
 import AddressEdit from './AddressEdit';
+import AddressMap from './AddressMap';
 import * as S from './style';
 
 const FindAddress = (props /* { getData() } */) => {
@@ -22,7 +23,8 @@ const FindAddress = (props /* { getData() } */) => {
     complement: null,
     condominium: null,
   });
-  const [openEdit, setOpenEdit] = useState('cep');
+  const [openEdit, setOpenEdit] = useState('method');
+  const [method, setMethod] = useState('map'); // 'map' ou 'cep'
 
   const getAddressCep = (data) => {
     setAddress(data);
@@ -34,8 +36,12 @@ const FindAddress = (props /* { getData() } */) => {
     props.getData(data);
   };
 
+  const getAddressMap = (data) => {
+    props.getData(data);
+  };
+
   return (
-    <S.BootstrapDialog open={true} fullScreen={fullScreen}>
+    <S.BootstrapDialog open={true} fullScreen={fullScreen} maxWidth="md">
       <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
         Cadastro de endereço
       </DialogTitle>
@@ -49,7 +55,45 @@ const FindAddress = (props /* { getData() } */) => {
         <CloseIcon />
       </IconButton>
 
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ minHeight: '500px' }}>
+        {openEdit === 'method' && (
+          <Box>
+            <Tabs value={method} onChange={(e, v) => setMethod(v)} sx={{ mb: 3 }}>
+              <Tab label="🌍 Mapa (Internacional)" />
+              <Tab label="📮 CEP (Brasil)" />
+            </Tabs>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 4 }}>
+              <IconButton
+                onClick={() => {
+                  if (method === 'map') {
+                    setOpenEdit('map');
+                  } else {
+                    setOpenEdit('cep');
+                  }
+                }}
+                sx={{
+                  fontSize: '1.2rem',
+                  p: 3,
+                  border: '2px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 2,
+                  '&:hover': {
+                    bgcolor: 'primary.light',
+                    color: 'white',
+                  },
+                }}
+              >
+                {method === 'map' ? '🌍 Usar Mapa' : '📮 Usar CEP'}
+              </IconButton>
+            </Box>
+          </Box>
+        )}
+        {openEdit === 'map' && (
+          <AddressMap 
+            getAddress={getAddressMap}
+            onClose={() => setOpenEdit('method')}
+          />
+        )}
         {openEdit === 'cep' && (
           <AddressCep getAddress={(data) => getAddressCep(data)} />
         )}

@@ -1,15 +1,21 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Box, Grid, TextField, Tab, Tabs } from '@mui/material';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import ButtonFloat from 'components/ButtonFloat';
 import FindAddress from 'components/FindAddress';
+import PhoneInput from 'components/PhoneInput';
 import { propsTextField } from 'utils/form';
 
 const Settings_Info = () => {
   const apiService = new ApiService();
   const { toast, setLoading, company, setCompany } = useContext(GlobalContext);
-  const [tabValue, setTabValue] = useState(0);
+  const [searchParams] = useSearchParams();
+  const [tabValue, setTabValue] = useState(() => {
+    const tab = searchParams.get('tab');
+    return tab ? parseInt(tab, 10) : 0;
+  });
   const [data, setData] = useState({ name: '', email: '', whatsapp: '' });
   const [addressData, setAddressData] = useState({
     city: '',
@@ -130,15 +136,12 @@ const Settings_Info = () => {
               />
             </Grid>
             <Grid item xs={12} sm={12}>
-              <TextField
+              <PhoneInput
                 label="WhatsApp"
                 value={data?.whatsapp || ''}
-                type="phone"
                 onChange={(e) => setData({ ...data, whatsapp: e.target.value })}
-                InputLabelProps={{ shrink: !!data.whatsapp }}
-                margin="dense"
-                fullWidth
                 required
+                fullWidth
               />
             </Grid>
           </Grid>

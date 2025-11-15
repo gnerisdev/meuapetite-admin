@@ -18,6 +18,8 @@ import {
   Divider,
   Chip,
   Grid,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -25,6 +27,8 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import * as S from './ProductModal.style';
 
 const ProductModal = ({ open, product, onClose, onAddToCart, primaryColor, secondaryColor }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [quantity, setQuantity] = useState(1);
   const [selectedComplements, setSelectedComplements] = useState({});
   const [comment, setComment] = useState('');
@@ -163,10 +167,12 @@ const ProductModal = ({ open, product, onClose, onAddToCart, primaryColor, secon
       onClose={onClose}
       maxWidth="md"
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: '16px',
-          maxHeight: '90vh',
+          borderRadius: { xs: 0, sm: '16px' },
+          maxHeight: { xs: '100vh', sm: '90vh' },
+          margin: { xs: 0, sm: '32px' },
         }
       }}
     >

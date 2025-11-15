@@ -25,7 +25,8 @@ const Routes = () => {
 
   // Rotas públicas (sempre acessíveis)
   const publicRoutes = [
-    { path: '/store/:slug', element: <Store /> }
+    { path: '/store/:slug', element: <Store /> },
+    { path: '/store/:slug/order/:orderId', element: <Store /> }
   ];
 
   const AuthRoutes = () => {

@@ -57,47 +57,218 @@ export const useVisitorTracking = (companyId) => {
   const lastActivityTime = useRef(Date.now());
   const cartAbandonTimer = useRef(null);
 
-  // Coletar localização GPS
+  // Coletar localização GPS ou por IP
   useEffect(() => {
-    if (!navigator.geolocation) {
-      return;
-    }
+    const getLocation = async () => {
+      // Tentar GPS primeiro
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              altitude: position.coords.altitude,
+              altitudeAccuracy: position.coords.altitudeAccuracy,
+              heading: position.coords.heading,
+              speed: position.coords.speed,
+              source: 'gps'
+            });
+          },
+          async (error) => {
+            // Se GPS falhar, tentar geolocalização por IP
+            console.log('GPS não disponível, tentando IP:', error.message);
+            try {
+              const baseUrl = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || 
+                (typeof window !== 'undefined' 
+                  ? `${window.location.protocol}//${window.location.hostname}:3000/api`
+                  : 'http://localhost:3000/api');
+              
+              const response = await fetch(`${baseUrl}/menu/track/location/ip`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                }
+              });
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        });
-      },
-      (error) => {
-        // Silenciosamente falha se o usuário negar
-        console.log('Localização não disponível:', error.message);
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 5000,
-        maximumAge: 300000 // 5 minutos
+              if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.location) {
+                  setLocation({
+                    latitude: data.location.latitude,
+                    longitude: data.location.longitude,
+                    accuracy: data.location.accuracy || 10000,
+                    source: 'ip',
+                    city: data.location.city,
+                    region: data.location.region,
+                    country: data.location.country
+                  });
+                }
+              }
+            } catch (ipError) {
+              console.log('Erro ao obter localização por IP:', ipError);
+            }
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: 300000 // 5 minutos
+          }
+        );
+      } else {
+        // Se geolocation não estiver disponível, tentar IP diretamente
+        try {
+          const baseUrl = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || 
+            (typeof window !== 'undefined' 
+              ? `${window.location.protocol}//${window.location.hostname}:3000/api`
+              : 'http://localhost:3000/api');
+          
+          const response = await fetch(`${baseUrl}/menu/track/location/ip`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.location) {
+              setLocation({
+                latitude: data.location.latitude,
+                longitude: data.location.longitude,
+                accuracy: data.location.accuracy || 10000,
+                source: 'ip',
+                city: data.location.city,
+                region: data.location.region,
+                country: data.location.country
+              });
+            }
+          }
+        } catch (ipError) {
+          console.log('Erro ao obter localização por IP:', ipError);
+        }
       }
-    );
+    };
+
+    getLocation();
   }, []);
+
+  // Coletar informações completas do dispositivo
+  const collectDeviceInfo = (locationData = null) => {
+    const screen = window.screen || {};
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+    const hardware = navigator.hardwareConcurrency ? { cores: navigator.hardwareConcurrency } : {};
+    
+    // Detectar versão do navegador
+    const getBrowserVersion = () => {
+      const ua = navigator.userAgent;
+      const match = ua.match(/(Chrome|Firefox|Safari|Edge|Opera)\/(\d+)/);
+      return match ? match[2] : null;
+    };
+
+    // Detectar versão do OS
+    const getOSVersion = () => {
+      const ua = navigator.userAgent;
+      if (ua.indexOf('Windows NT') > -1) {
+        const match = ua.match(/Windows NT (\d+\.\d+)/);
+        return match ? match[1] : null;
+      }
+      if (ua.indexOf('Mac OS X') > -1) {
+        const match = ua.match(/Mac OS X (\d+[._]\d+)/);
+        return match ? match[1].replace('_', '.') : null;
+      }
+      if (ua.indexOf('Android') > -1) {
+        const match = ua.match(/Android (\d+\.\d+)/);
+        return match ? match[1] : null;
+      }
+      if (ua.indexOf('iOS') > -1 || /iPad|iPhone|iPod/.test(ua)) {
+        const match = ua.match(/OS (\d+[._]\d+)/);
+        return match ? match[1].replace('_', '.') : null;
+      }
+      return null;
+    };
+
+    // Detectar plugins
+    const getPlugins = () => {
+      if (navigator.plugins && navigator.plugins.length > 0) {
+        return Array.from(navigator.plugins).map(p => p.name).filter(Boolean);
+      }
+      return [];
+    };
+
+    // Detectar orientação
+    const getOrientation = () => {
+      if (screen.orientation) {
+        return screen.orientation.type || screen.orientation;
+      }
+      if (window.orientation !== undefined) {
+        return window.orientation === 0 || window.orientation === 180 ? 'portrait' : 'landscape';
+      }
+      return screen.width > screen.height ? 'landscape' : 'portrait';
+    };
+
+    // Obter referrer domain
+    const getReferrerDomain = () => {
+      if (!document.referrer) return null;
+      try {
+        return new URL(document.referrer).hostname;
+      } catch {
+        return null;
+      }
+    };
+
+    return {
+      companyId,
+      sessionId,
+      userAgent: navigator.userAgent,
+      device: detectDevice(),
+      browser: detectBrowser(),
+      browserVersion: getBrowserVersion(),
+      os: detectOS(),
+      osVersion: getOSVersion(),
+      location: locationData || location,
+      screen: {
+        width: screen.width,
+        height: screen.height,
+        availWidth: screen.availWidth,
+        availHeight: screen.availHeight,
+        colorDepth: screen.colorDepth,
+        pixelDepth: screen.pixelDepth,
+        orientation: getOrientation()
+      },
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      },
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      language: navigator.language,
+      languages: navigator.languages || [navigator.language],
+      platform: navigator.platform,
+      referrer: document.referrer || null,
+      referrerDomain: getReferrerDomain(),
+      cookiesEnabled: navigator.cookieEnabled,
+      doNotTrack: navigator.doNotTrack || null,
+      connection: {
+        effectiveType: connection.effectiveType || null,
+        downlink: connection.downlink || null,
+        rtt: connection.rtt || null,
+        saveData: connection.saveData || null
+      },
+      hardware: {
+        cores: hardware.cores || null,
+        memory: navigator.deviceMemory || null
+      },
+      plugins: getPlugins()
+    };
+  };
 
   // Iniciar rastreamento da visita
   useEffect(() => {
     if (!companyId) return;
 
-    const trackVisit = async () => {
+    const trackVisit = async (locationData = null) => {
       try {
-        const deviceInfo = {
-          companyId,
-          sessionId,
-          userAgent: navigator.userAgent,
-          device: detectDevice(),
-          browser: detectBrowser(),
-          os: detectOS(),
-          location
-        };
-
+        const deviceInfo = collectDeviceInfo(locationData);
         await apiService.post('/menu/track/visit', deviceInfo);
       } catch (error) {
         console.error('Erro ao rastrear visita:', error);
@@ -108,7 +279,7 @@ export const useVisitorTracking = (companyId) => {
 
     // Atualizar localização se mudar
     if (location) {
-      trackVisit();
+      trackVisit(location);
     }
   }, [companyId, sessionId, location]);
 

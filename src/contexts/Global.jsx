@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { ApiService } from 'services/api.service';
+import { useServiceWorker } from 'hooks/useServiceWorker';
 
 export const GlobalContext = createContext();
 
@@ -12,6 +13,9 @@ export const GlobalProvider = (props) => {
   const [authenticationStatus, setAuthenticationStatus] = useState('authenticating');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [themeMode, setThemeMode] = useState('light');
+  
+  // Registrar Service Worker para PWA
+  const { isSupported: swSupported } = useServiceWorker();
 
   const getComapny = async () => {
     try {

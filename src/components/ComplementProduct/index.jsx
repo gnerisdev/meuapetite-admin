@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Typography,
   Grid,
   TextField,
   Button,
-  Checkbox,
+  Radio,
+  RadioGroup,
   FormControlLabel,
+  FormControl,
+  Box,
+  IconButton,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { propsTextField } from 'utils/form';
 import * as S from './style';
 
@@ -19,17 +21,24 @@ const ComplementProduct = ({ complementsValue, getValue }) => {
     name: null, max: 1, min: 0, isRequired: null, options: [{ name: null, price: null }] 
   };
 
-  const [complements, setComplements] = useState([...complementsValue]);
+  const [complements, setComplements] = useState(() => {
+    return complementsValue && complementsValue.length > 0 ? [...complementsValue] : [initComplement];
+  });
+  
+  const isInitialMount = useRef(true);
+  const lastComplementsValueRef = useRef(complementsValue);
 
   const setValue = (index, key, value) => {
     const complementsCurrent = [...complements];
     complementsCurrent[index][key] = value;
+    setComplements(complementsCurrent);
     getValue(complementsCurrent, validateData());
   };
 
   const setValueOption = (index, indexOption, key, value) => {
     const complementsCurrent = [...complements];
     complementsCurrent[index]['options'][indexOption][key] = value;
+    setComplements(complementsCurrent);
     getValue(complementsCurrent, validateData());
   };
 
@@ -37,20 +46,27 @@ const ComplementProduct = ({ complementsValue, getValue }) => {
     const complementsCurrent = [...complements];
     complementsCurrent[index]['options'].push({ name: '', price: null, priceFormat: null });
     setComplements(complementsCurrent);
+    getValue(complementsCurrent, validateData());
   };
 
-  const addComplementGroup = () => setComplements([...complements, initComplement]);
+  const addComplementGroup = () => {
+    const newComplements = [...complements, initComplement];
+    setComplements(newComplements);
+    getValue(newComplements, validateData());
+  };
 
   const removeComplementGroup = (index) => {
     if (complements.length === 1) {
-      setComplements([initComplement]);
+      const resetComplements = [initComplement];
+      setComplements(resetComplements);
+      getValue(resetComplements, validateData());
       return;
     }
 
     let complementsCurrent = [...complements];
     complementsCurrent = complementsCurrent.filter((item, i) => i !== index);
     setComplements(complementsCurrent);
-    getValue(complementsCurrent, validateData())
+    getValue(complementsCurrent, validateData());
   };
 
   const removeOption = (complementIndex, optionIndex) => {
@@ -58,6 +74,7 @@ const ComplementProduct = ({ complementsValue, getValue }) => {
     complementsCurrent[complementIndex]['options'] = complementsCurrent[complementIndex]
       ['options'].filter((item, i) => i !== optionIndex);
     setComplements(complementsCurrent);
+    getValue(complementsCurrent, validateData());
   };
 
   const validateData = () => {
@@ -91,159 +108,299 @@ const ComplementProduct = ({ complementsValue, getValue }) => {
     return errors;
   };
 
-  const maskFormat = (text) => {
-    text = text + '';
-    const number = parseInt(text.replace(/\D/g, ''), 10);
-    if (isNaN(number)) return 'R$ 0.00';
-    return 'R$ ' + (number / 100).toFixed(2);
+  const maskFormat = (value) => {
+    if (value === null || value === undefined) return 'R$ 0,00';
+    if (typeof value === 'string') {
+      const number = parseInt(value.replace(/\D/g, ''), 10);
+      if (isNaN(number)) return 'R$ 0,00';
+      return 'R$ ' + (number / 100).toFixed(2).replace('.', ',');
+    }
+    if (typeof value === 'number') {
+      return 'R$ ' + value.toFixed(2).replace('.', ',');
+    }
+    return 'R$ 0,00';
   };
 
   useEffect(() => {
-    if (!complementsValue.length) return setComplements([initComplement]);
-  }, []);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      lastComplementsValueRef.current = complementsValue;
+      return;
+    }
+
+    // Só atualiza se complementsValue realmente mudou (vindo de fora, não de dentro)
+    if (complementsValue !== lastComplementsValueRef.current) {
+      lastComplementsValueRef.current = complementsValue;
+      
+      if (complementsValue && complementsValue.length > 0) {
+        setComplements([...complementsValue]);
+      } else if (!complementsValue || complementsValue.length === 0) {
+        setComplements([initComplement]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [complementsValue]);
 
   return (
-    <Grid container spacing={2} sx={{ width: '100%', margin: 'auto' }}>
+    <Box sx={{ width: '100%', pb: 2 }}>
       {complements.map((item, index) => {
         const options = item.options || [];
+        const isRequired = complements[index]['isRequired'];
 
         return (
-          <Accordion key={`complent-${index}`} sx={{ width: '100%', margin: 'auto' }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography sx={{ fontSize: '1.1rem' }}>{complements[index]['name'] || `${(index + 1)} - Grupo de complemento`}</Typography>
-            </AccordionSummary>
+          <S.CardContainer key={`complement-${index}`}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+              <Box sx={{ flex: 1, maxWidth: { xs: '100%', sm: '600px' } }}>
+                <TextField
+                  {...propsTextField}
+                  label="Nome do grupo"
+                  InputLabelProps={{ shrink: true }}
+                  placeholder="Ex: Tamanho, Extras, Bebidas"
+                  value={complements[index]['name'] || ''}
+                  onChange={(e) => setValue(index, 'name', e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      fontSize: { xs: '1rem', sm: '1.125rem' },
+                      fontWeight: 600,
+                      '& fieldset': {
+                        border: 'none',
+                      },
+                      '&:hover fieldset': {
+                        border: 'none',
+                      },
+                      '&.Mui-focused fieldset': {
+                        border: '2px solid',
+                        borderColor: 'primary.main',
+                      },
+                    },
+                  }}
+                  fullWidth
+                />
+              </Box>
+              {complements.length > 1 && (
+                <IconButton
+                  onClick={() => removeComplementGroup(index)}
+                  sx={{
+                    ml: 1,
+                    color: 'text.secondary',
+                    '&:hover': {
+                      color: 'error.main',
+                      bgcolor: 'error.light',
+                    },
+                  }}
+                >
+                  <DeleteOutlineIcon />
+                </IconButton>
+              )}
+            </Box>
 
-            <AccordionDetails>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={12} sx={{ p: 0 }}>
-                  <Button
-                    variant="outlined"
-                    sx={{ display: 'flex', gap: 1 }}
-                    onClick={() => removeComplementGroup(index)}
-                  >
-                    <span className="fa fa-trash"></span> Remover grupo
-                  </Button>
-                </Grid>
-
-                <Grid item xs={12} sm={12}>
-                  <TextField
-                    {...propsTextField}
-                    InputLabelProps={{ shrink: true }}
-                    label="Nome"
-                    value={complements[index]['name']}
-                    onChange={(e) => setValue(index, 'name', e.target.value)}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sx={{ mt: 1.1, mb: 1.1 }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>
-                    Indique se a categoria é necessária para pedir o prato
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, mb: 1.5, color: 'text.secondary' }}>
+                Tipo de seleção
                   </Typography>
-
+              <RadioGroup
+                value={isRequired === null ? '' : String(isRequired)}
+                onChange={(e) => setValue(index, 'isRequired', e.target.value === 'true')}
+                sx={{ gap: 0 }}
+              >
+                <S.RadioOption>
                   <FormControlLabel
-                    control={
-                      <Checkbox
-                        onChange={() => setValue(index, 'isRequired', false)}
-                        checked={complements[index]['isRequired'] === false}
-                      />
+                    value="false"
+                    control={<Radio sx={{ color: 'text.secondary' }} />}
+                    label={
+                      <Box>
+                        <Typography sx={{ fontWeight: 500, fontSize: '0.9375rem' }}>
+                          Opcional
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.8125rem' }}>
+                          Cliente pode escolher ou não
+                        </Typography>
+                      </Box>
                     }
-                    label="Opcional, o cliente pode ou não selecionar os itens."
                   />
-
-                  <br />
-
+                </S.RadioOption>
+                <S.RadioOption>
                   <FormControlLabel
-                    sx={{ mt: 1 }}
-                    control={
-                      <Checkbox
-                        onChange={() => setValue(index, 'isRequired', true)}
-                        checked={complements[index]['isRequired'] === true}
-                      />
+                    value="true"
+                    control={<Radio sx={{ color: 'text.secondary' }} />}
+                    label={
+                      <Box>
+                        <Typography sx={{ fontWeight: 500, fontSize: '0.9375rem' }}>
+                          Obrigatório
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.8125rem' }}>
+                          Cliente deve escolher pelo menos uma opção
+                        </Typography>
+                      </Box>
                     }
-                    label="Obrigatório, o cliente deve selecionar  1 ou mais itens para adicionar o pedido no carrinho."
                   />
-                </Grid>
+                </S.RadioOption>
+              </RadioGroup>
+            </FormControl>
 
-                <Grid item xs={5} sm={2}>
-                  <TextField
-                    {...propsTextField}
-                    size="small"
-                    InputLabelProps={{ shrink: true }}
-                    label="Quant. mínima"
-                    type="number"
-                    value={complements[index]['min']}
-                    onChange={(e) => setValue(index, 'min', e.target.value)}
-                  />
-                </Grid>
-
-                <Grid item xs={5} sm={2}>
-                  <TextField
-                    {...propsTextField}
-                    size="small"
-                    InputLabelProps={{ shrink: true }}
-                    label="Quant. máxima"
-                    type="number"
-                    value={complements[index]['max']}
-                    onChange={(e) => setValue(index, 'max', e.target.value)}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography><strong>Opções</strong></Typography>
-                </Grid>
-
-                {options.map((option, indexOption) => (
-                  <S.WrapperOption key={`option-${indexOption}`}>
-                    <div className='info'>
-                      <div>Opção {(indexOption + 1)}</div>
-                    </div>
-
+            {isRequired !== null && (
+              <Box sx={{ maxWidth: { xs: '100%', sm: '300px' }, mb: 3 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
                     <TextField
                       {...propsTextField}
-                      margin="none"
-                      label="Nome"
-                      value={complements[index]['options'][indexOption]['name']}
-                      onChange={(e) => setValueOption(index, indexOption, 'name', e.target.value)}
-                    />
-                    <TextField
-                      {...propsTextField}
-                      margin="none"
-                      label="Valor adicional"
-                      value={maskFormat(complements[index]['options'][indexOption]['price'])}
-                      onChange={(e) => {
-                        setValueOption(index, indexOption, 'priceFormat', maskFormat(e.target.value));
-                        setValueOption(
-                          index, 
-                          indexOption, 
-                          'price', 
-                          parseFloat(
-                            complements[index]['options'][indexOption]['priceFormat'].replace('R$ ', ' '))
-                          );
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                      label="Mínimo"
+                      type="number"
+                      value={complements[index]['min'] || 0}
+                      onChange={(e) => setValue(index, 'min', parseInt(e.target.value) || 0)}
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                        },
                       }}
                     />
-                    <S.ButtonRemoveOption color="error" onClick={() => removeOption(index, indexOption)}>
-                      Remover
-                    </S.ButtonRemoveOption>
-                  </S.WrapperOption>
-                ))}
-
-                <Grid item xs={12}>
-                  <Button variant="outlined" onClick={() => addComplement(index)}>
-                    + Novo complemento
-                  </Button>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      {...propsTextField}
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                      label="Máximo"
+                      type="number"
+                      value={complements[index]['max'] || 1}
+                      onChange={(e) => setValue(index, 'max', parseInt(e.target.value) || 1)}
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                        },
+                      }}
+                    />
+                  </Grid>
                 </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
+              </Box>
+            )}
+
+            <Box sx={{ mb: 2 }}>
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, mb: 2, color: 'text.secondary' }}>
+                Opções ({options.length})
+              </Typography>
+              
+              {options.map((option, indexOption) => (
+                <S.OptionCard key={`option-${indexOption}`}>
+                  <Box sx={{ maxWidth: { xs: '100%', sm: '600px' } }}>
+                    <Grid container spacing={1.5} alignItems="center">
+                      <Grid item xs={6} sm={6}>
+                    <TextField
+                      {...propsTextField}
+                        placeholder="Nome da opção"
+                        value={complements[index]['options'][indexOption]['name'] || ''}
+                      onChange={(e) => setValueOption(index, indexOption, 'name', e.target.value)}
+                        fullWidth
+                        size="small"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={4} sm={4}>
+                    <TextField
+                      {...propsTextField}
+                        placeholder="R$ 0,00"
+                        value={complements[index]['options'][indexOption]['priceFormat'] || maskFormat(complements[index]['options'][indexOption]['price'] || 0)}
+                      onChange={(e) => {
+                          const inputValue = e.target.value;
+                          const formatted = maskFormat(inputValue);
+                          setValueOption(index, indexOption, 'priceFormat', formatted);
+                          const numericString = formatted.replace('R$ ', '').replace(',', '.');
+                          const numericValue = parseFloat(numericString) || 0;
+                          setValueOption(index, indexOption, 'price', numericValue);
+                        }}
+                        fullWidth
+                        size="small"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={2} sm={2} sx={{ display: 'flex', justifyContent: 'center' }}>
+                      <IconButton
+                        onClick={() => removeOption(index, indexOption)}
+                        size="small"
+                        sx={{
+                          color: 'text.secondary',
+                          '&:hover': {
+                            color: 'error.main',
+                            bgcolor: 'error.light',
+                          },
+                        }}
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Grid>
+                  </Grid>
+                  </Box>
+                </S.OptionCard>
+              ))}
+
+              <Box sx={{ maxWidth: { xs: '100%', sm: '400px' } }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={() => addComplement(index)}
+                  fullWidth
+                  size="small"
+                  sx={{
+                    mt: 2,
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    minHeight: { xs: '36px', sm: '40px' },
+                    fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                    '&:hover': {
+                      borderColor: 'primary.dark',
+                      bgcolor: 'primary.light',
+                    },
+                  }}
+                >
+                  Adicionar opção
+                </Button>
+              </Box>
+            </Box>
+          </S.CardContainer>
         );
       })}
 
-      <S.WrapperBtnNewGroup>
-        <Button variant="contained" onClick={addComplementGroup}>
-          Novo grupo de complemento
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end',
+        mt: 2
+      }}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={addComplementGroup}
+          size="small"
+          sx={{
+            borderRadius: '8px',
+            textTransform: 'none',
+            fontWeight: 600,
+            minHeight: { xs: '40px', sm: '44px' },
+            fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            '&:hover': {
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            },
+          }}
+        >
+          Adicionar novo grupo
         </Button>
-      </S.WrapperBtnNewGroup>
-    </Grid>
+      </Box>
+    </Box>
   );
 };
 

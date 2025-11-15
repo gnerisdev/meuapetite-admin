@@ -4,6 +4,7 @@ import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import ButtonFloat from 'components/ButtonFloat';
 import BackdropLoading from 'components/BackdropLoading';
+import PhoneInput from 'components/PhoneInput';
 
 const Settings_InfoContact = () => {
   const apiService = new ApiService();
@@ -56,15 +57,12 @@ const Settings_InfoContact = () => {
           />
         </Grid>
         <Grid item xs={12} sm={12}>
-          <TextField
-            label="Whatsapp oficial"
-            value={data?.whatsapp}
-            type="phone"
+          <PhoneInput
+            label="WhatsApp oficial"
+            value={data?.whatsapp || ''}
             onChange={(e) => setData({ ...data, whatsapp: e.target.value })}
-            InputLabelProps={{ shrink: data.whatsapp }}
-            margin="dense"
-            fullWidth
             required
+            fullWidth
           />
         </Grid>
       </Grid>

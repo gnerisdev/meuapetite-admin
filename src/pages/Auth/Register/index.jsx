@@ -7,7 +7,6 @@ import {
   Link,
   Grid,
   Box,
-  InputAdornment,
   CssBaseline,
   Checkbox,
   FormControlLabel,
@@ -19,6 +18,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import BackdropLoading from 'components/BackdropLoading';
+import PhoneInput from 'components/PhoneInput';
 import * as S from './style';
 
 
@@ -32,10 +32,7 @@ const Register = () => {
     email: '',
     password: '',
     passwordRepeat: '',
-    storeUrl: '',
-    fantasyName: '',
     ownerName: '',
-    description: '',
     whatsapp: ''
   });
 
@@ -60,10 +57,9 @@ const Register = () => {
     try {
       if (
         !data.email || !data.password || !data.passwordRepeat ||
-        !data.fantasyName || !data.ownerName || !data.storeUrl ||
-        !data.whatsapp
+        !data.ownerName || !data.whatsapp
       ) {
-        return toast.error('Todos os campos precisam serem preencidos!');
+        return toast.error('Todos os campos precisam serem preenchidos!');
       }
 
       if (data.password !== data.passwordRepeat) {
@@ -87,7 +83,7 @@ const Register = () => {
         return toast.error(response.data.message);
       }
 
-      toast.success('Successo! Faça o login para continuar.');
+      toast.success('Cadastro realizado! Verifique seu email para ativar sua conta.');
       setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
       let errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
@@ -128,56 +124,24 @@ const Register = () => {
                   fullWidth
                   label="Seu nome"
                   autoFocus
-                  data={data.ownerName}
+                  value={data.ownerName}
                   onChange={(e) => setData({ ...data, ownerName: e.target.value })}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Nome do seu negócio"
-                  data={data.fantasyName}
-                  onChange={(e) => setData({ ...data, fantasyName: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={12}>
-                <TextField
-                  label="Descrição (fale sobre seu negócio)"
-                  value={data.description}
-                  onChange={(e) => setData({ ...data, description: e.target.value })}
-                  rows={3}
-                  multiline
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Link personalizado"
-                  value={data.storeUrl}
-                  InputProps={{
-                    startAdornment:
-                      <InputAdornment position="start" sx={{ color: '#ff7f32' }}>
-                        {'https://meuapetite.com'}/
-                      </InputAdornment>
-                  }}
-                  onChange={(e) => setData({ ...data, storeUrl: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
                   value={data.email}
-                  label="Email do negócio"
+                  label="Email"
+                  type="email"
                   onChange={(e) => setData({ ...data, email: e.target.value })}
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
+                <PhoneInput
                   fullWidth
-                  type="tel"
                   value={data.whatsapp}
-                  label="Whatsapp do negócio"
+                  label="WhatsApp"
                   onChange={(e) => setData({ ...data, whatsapp: e.target.value })}
                 />
               </Grid>

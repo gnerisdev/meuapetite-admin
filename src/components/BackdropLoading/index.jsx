@@ -1,18 +1,135 @@
-import { Backdrop, Box, CircularProgress } from '@mui/material';
+import { useState, useEffect, useRef } from 'react';
+import { Backdrop, Box, Typography } from '@mui/material';
+import { keyframes } from '@mui/system';
+
+// Animação de barras pulsantes
+const barAnimation = keyframes`
+  0%, 40%, 100% {
+    transform: scaleY(0.4);
+    opacity: 0.5;
+  }
+  20% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+`;
+
+// Animação suave de fade in
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const BackdropLoading = (props) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  const startTimeRef = useRef(null);
+  const timeoutRef = useRef(null);
+  const minDisplayTime = 2000; // 2 segundos mínimo
+
+  const isLoading = typeof props.loading === 'string' ? true : props.loading;
+  const message = typeof props.loading === 'string' ? props.loading : (props.loading ? 'Carregando...' : null);
+
+  useEffect(() => {
+    // Limpar timeout anterior se existir
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    if (isLoading) {
+      // Iniciar loading
+      startTimeRef.current = Date.now();
+      setIsVisible(true);
+      setShowContent(true);
+    } else {
+      // Calcular tempo decorrido
+      const elapsed = startTimeRef.current ? Date.now() - startTimeRef.current : 0;
+      const remainingTime = Math.max(0, minDisplayTime - elapsed);
+
+      // Aguardar o tempo mínimo antes de esconder
+      timeoutRef.current = setTimeout(() => {
+        setShowContent(false);
+        // Aguardar transição antes de esconder completamente
+        setTimeout(() => setIsVisible(false), 300);
+      }, remainingTime);
+    }
+
+    // Cleanup
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isLoading]);
+
+  if (!isVisible) return null;
+
   return (
     <Backdrop
       sx={{
-        color: '#000000',
         zIndex: (theme) => theme.zIndex.drawer + 100,
-        backgroundColor: props?.bgColor ?? 'rgb(0 0 0 / 70%)'
+        backgroundColor: props?.bgColor ?? 'rgba(0, 0, 0, 0.75)',
+        backdropFilter: 'blur(2px)',
+        transition: 'opacity 0.3s ease-in-out',
+        opacity: showContent ? 1 : 0,
       }}
-      open={typeof props.loading === 'string' ? true : props.loading}
+      open={true}
     >
-      <Box sx={{ display: 'grid', justifyContent: 'center', gap: 1 }}>
-        <CircularProgress size="4rem" sx={{ margin: 'auto' }} />
-        <strong style={{ color: '#fff' }}>{props.loading}</strong>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          animation: `${fadeIn} 0.3s ease-in`,
+        }}
+      >
+        {/* Barras animadas */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.5,
+            height: 50,
+          }}
+        >
+          {[0, 1, 2, 3, 4].map((index) => (
+            <Box
+              key={index}
+              sx={{
+                width: 4,
+                height: 40,
+                backgroundColor: 'primary.main',
+                borderRadius: '2px',
+                animation: `${barAnimation} 1.2s ease-in-out infinite`,
+                animationDelay: `${index * 0.1}s`,
+                transformOrigin: 'center',
+              }}
+            />
+          ))}
+        </Box>
+
+        <Typography
+          variant="body1"
+          sx={{
+            color: '#fff',
+            fontWeight: 400,
+            fontSize: '0.95rem',
+            letterSpacing: '0.3px',
+            opacity: 0.9,
+          }}
+        >
+          {message || 'Carregando...'}
+        </Typography>
       </Box>
     </Backdrop>
   );

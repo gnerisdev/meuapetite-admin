@@ -13,18 +13,20 @@ import {
   DialogActions,
   Button,
   Chip,
-  Divider
+  Divider,
+  Alert
 } from '@mui/material';
-import { QrCode2, TrendingUp, ShoppingCart, AttachMoney, LocalShipping, Restaurant } from '@mui/icons-material';
+import { QrCode2, TrendingUp, ShoppingCart, AttachMoney, LocalShipping, Restaurant, WhatsApp } from '@mui/icons-material';
 import QRCode from 'react-qr-code';
 import Chart from 'chart.js/auto';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import { ApplicationUtils } from 'utils/ApplicationUtils';
-import StepperCompany from './StepperCompany';
+import VerifyEmail from 'pages/Auth/VerifyEmail';
 import * as S from './style';
 import Header from 'components/Header';
+import InstallPWAButton from 'components/InstallPWAButton';
 
 const Home = () => {
   const { company } = useContext(GlobalContext);
@@ -33,6 +35,7 @@ const Home = () => {
   const [doughnutChartData, setDoughnutChartData] = useState(null);
   const [revenueChartData, setRevenueChartData] = useState(null);
   const [openQRDialog, setOpenQRDialog] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
   const [dashboardStats, setDashboardStats] = useState({
     todayOrders: 0,
     todayRevenue: 0,
@@ -182,6 +185,32 @@ const Home = () => {
     }
   };
 
+  const handleSendDailyReport = async () => {
+    setSendingReport(true);
+    try {
+      console.log('[Frontend] Iniciando envio de relatório...');
+      const response = await apiService.post('/admin/company/send-daily-report', {});
+      console.log('[Frontend] Resposta recebida:', response.data);
+      
+      if (response.data.success) {
+        alert('✅ Relatório diário enviado com sucesso! Verifique seu WhatsApp.');
+      } else {
+        alert('❌ Erro ao enviar relatório: ' + (response.data.message || 'Erro desconhecido'));
+      }
+    } catch (error) {
+      console.error('[Frontend] Erro completo:', error);
+      console.error('[Frontend] Resposta do erro:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          'Erro ao enviar relatório diário. Verifique se o WhatsApp está cadastrado e se o serviço está disponível.';
+      
+      alert('❌ Erro ao enviar relatório: ' + errorMessage);
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
   useEffect(() => {
     if (company.online) {
     getOrdersDashboard();
@@ -190,13 +219,41 @@ const Home = () => {
     }
   }, [company.online]);
 
-  if (!company.online) {
-    return <StepperCompany company={company} />;
+  // Redirecionar para verificação de email se não estiver verificado
+  if (!company.verifyEmail) {
+    return <VerifyEmail />;
   }
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
-      {/* Header com QR Code */}
+      {/* Botão de Instalação PWA */}
+      <InstallPWAButton />
+      
+      {/* Alerta para preencher endereço */}
+      {!company?.address?.zipCode && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 3 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small" 
+              onClick={() => window.location.href = '/settings/info?tab=1'}
+            >
+              Preencher
+            </Button>
+          }
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Endereço não preenchido
+          </Typography>
+          <Typography variant="caption">
+            Para colocar sua loja online, é necessário preencher o endereço do seu negócio.
+          </Typography>
+        </Alert>
+      )}
+
+      {/* Header com QR Code e Botão de Relatório */}
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -207,18 +264,36 @@ const Home = () => {
       }}>
         <Header title="Dashboard" />
         
-        <IconButton
-          onClick={() => setOpenQRDialog(true)}
-          sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
-            '&:hover': { bgcolor: 'primary.dark' },
-            width: { xs: 48, sm: 56 },
-            height: { xs: 48, sm: 56 }
-          }}
-        >
-          <QrCode2 sx={{ fontSize: { xs: 24, sm: 28 } }} />
-        </IconButton>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton
+            onClick={handleSendDailyReport}
+            disabled={sendingReport}
+            sx={{
+              bgcolor: 'success.main',
+              color: 'white',
+              '&:hover': { bgcolor: 'success.dark' },
+              '&:disabled': { bgcolor: 'grey.400' },
+              width: { xs: 48, sm: 56 },
+              height: { xs: 48, sm: 56 }
+            }}
+            title="Enviar relatório diário via WhatsApp"
+          >
+            <WhatsApp sx={{ fontSize: { xs: 24, sm: 28 } }} />
+          </IconButton>
+          
+          <IconButton
+            onClick={() => setOpenQRDialog(true)}
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              '&:hover': { bgcolor: 'primary.dark' },
+              width: { xs: 48, sm: 56 },
+              height: { xs: 48, sm: 56 }
+            }}
+          >
+            <QrCode2 sx={{ fontSize: { xs: 24, sm: 28 } }} />
+          </IconButton>
+        </Box>
       </Box>
 
       {/* Cards de Métricas Principais */}

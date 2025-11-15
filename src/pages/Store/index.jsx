@@ -19,10 +19,11 @@ import { useVisitorTracking } from 'hooks/useVisitorTracking';
 import ProductModal from './components/ProductModal';
 import Cart from './components/Cart';
 import StoreInfoModal from './components/StoreInfoModal';
+import OrderConfirmation from './components/OrderConfirmation';
 import * as S from './style';
 
 const Store = () => {
-  const { slug } = useParams();
+  const { slug, orderId } = useParams();
   const apiService = new ApiService(false); // Não autenticado
   const [store, setStore] = useState(null);
   const [products, setProducts] = useState([]);
@@ -165,6 +166,11 @@ const Store = () => {
 
   const primaryColor = store.custom?.colorPrimary || '#800080';
   const secondaryColor = store.custom?.colorSecondary || '#00FF00';
+
+  // Se houver orderId na URL, exibir página de confirmação
+  if (orderId) {
+    return <OrderConfirmation />;
+  }
 
   return (
     <S.StoreContainer $primaryColor={primaryColor} $secondaryColor={secondaryColor}>

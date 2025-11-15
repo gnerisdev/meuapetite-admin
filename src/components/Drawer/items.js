@@ -20,6 +20,11 @@ export const menuItems = [
     Icon: () => <i className="fas fa-money-bill-wave"></i>, 
   },
   {
+    text: 'Visitantes',
+    link: '/visitors',
+    Icon: () => <i className="fas fa-users"></i>,
+  },
+  {
     text: 'Horário de Funcionamento',
     link: '/opening-hours',
     Icon: () => <i className="fas fa-clock"></i>,

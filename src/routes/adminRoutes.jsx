@@ -16,7 +16,9 @@ import OpeningHours from 'pages/OpeningHours/Index';
 import Payment_InDelivery from 'pages/PaymentMethod/Payment_InDelivery';
 import Financial from 'pages/Financial/Index';
 import Terms from 'pages/Terms';
+import Visitors from 'pages/Visitors/Index';
 import AdminLayout from 'layouts/Admin';
+import VerifyEmail from 'pages/Auth/VerifyEmail';
 
 const adminRoutes = [
   {
@@ -25,6 +27,7 @@ const adminRoutes = [
     children: [
       { path: '', element: <Home /> },
       { path: 'home', element: <Home /> },
+      { path: 'verify-email', element: <VerifyEmail /> },
 
       { path: 'products', element: <Product /> },
       { path: 'products/create', element: <ProductCreate /> },
@@ -36,6 +39,8 @@ const adminRoutes = [
       { path: 'appearance', element: <Appearance /> },
 
       { path: 'financial', element: <Financial /> },
+
+      { path: 'visitors', element: <Visitors /> },
 
       { path: 'opening-hours', element: <OpeningHours /> },
 

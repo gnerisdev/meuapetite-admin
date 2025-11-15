@@ -65,13 +65,28 @@ const MiniDrawer = () => {
       ? event.target.checked 
       : !company?.online;
     
+    // Verificar se está tentando colocar online sem endereço preenchido
+    if (isOnline && !company?.address?.zipCode) {
+      toast.error('Você precisa preencher o endereço antes de colocar a loja online.');
+      // Prevenir que o switch mude de estado
+      if (event.target) {
+        event.target.checked = false;
+      }
+      return;
+    }
+    
     try {
       const { data } = await apiService.put('/admin/company/online', { online: isOnline });
       setCompany({ ...company, online: isOnline });
       toast.success(isOnline ? 'Loja colocada online!' : 'Loja colocada offline!');
     } catch (error) {
       console.error(error);
-      toast.error('Não foi possível atualizar o status da loja');
+      const errorMessage = error.response?.data?.message || 'Não foi possível atualizar o status da loja';
+      toast.error(errorMessage);
+      // Reverter o estado do switch em caso de erro
+      if (event.target) {
+        event.target.checked = !isOnline;
+      }
     }
   };
 

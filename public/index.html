@@ -48,11 +48,15 @@
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
   <script>
+    // Este script será substituído pelo hook useServiceWorker
+    // Mantido apenas para compatibilidade
     if (navigator?.serviceWorker) { 
       navigator.serviceWorker.addEventListener('message', event => {
-        if (event.data.action === 'playAudio') {
-          const audio = new Audio('https://res.cloudinary.com/dd3cpbrv4/video/upload/v1699486782/yroksljyhhwzbehpvwus.mp3');
-          audio.play();
+        if (event.data && event.data.action === 'playAudio') {
+          const soundPath = event.data.sound || '/success-fanfare-trumpets-6185.mp3';
+          const audio = new Audio(soundPath);
+          audio.volume = 0.7;
+          audio.play().catch(err => console.error('Erro ao tocar som:', err));
         }
       });
     }
