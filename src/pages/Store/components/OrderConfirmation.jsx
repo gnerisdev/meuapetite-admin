@@ -12,8 +12,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import { CheckCircleIcon, WhatsAppIcon } from 'components/icons';
 import { ApiService } from 'services/api.service';
 
 const OrderConfirmation = () => {

@@ -1,10 +1,8 @@
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import { getMenuBaseUrl } from 'utils/env';
 import CssBaseline from '@mui/material/CssBaseline';
-import MenuIcon from '@mui/icons-material/Menu';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
   ListItemIcon,
   ListItemText,
@@ -22,8 +20,7 @@ import {
   Fade,
   Typography
 } from '@mui/material';
-import StoreIcon from '@mui/icons-material/Store';
-import StorefrontIcon from '@mui/icons-material/Storefront';
+import { MenuIcon, ChevronLeftIcon, ChevronRightIcon, StoreIcon, StorefrontIcon } from 'components/icons';
 import { Avatar, CardHeader, styled } from '@mui/material';
 import { GlobalContext } from 'contexts/Global';
 import { ApiService } from 'services/api.service';
@@ -74,6 +71,16 @@ const MiniDrawer = () => {
       }
       return;
     }
+
+    // Verificar se está tentando colocar online sem slug preenchido
+    if (isOnline && !company?.storeUrl) {
+      toast.error('Você precisa configurar o slug da loja antes de colocar a loja online.');
+      // Prevenir que o switch mude de estado
+      if (event.target) {
+        event.target.checked = false;
+      }
+      return;
+    }
     
     try {
       const { data } = await apiService.put('/admin/company/online', { online: isOnline });
@@ -95,7 +102,7 @@ const MiniDrawer = () => {
       label: 'Visitar cardápio',
       iconClass: 'fa-eye',
       action: () => {
-        const baseUrl = process.env.REACT_APP_MENU_BASE_URL || window.location.origin;
+        const baseUrl = getMenuBaseUrl() || window.location.origin;
         window.open(`${baseUrl}/store/${company.storeUrl}`, '_blank');
         setOpenMenuProfile(false);
       }

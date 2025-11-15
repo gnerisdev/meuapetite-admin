@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { LockOutlinedIcon } from 'components/icons';
 import {
   Avatar,
   Button,

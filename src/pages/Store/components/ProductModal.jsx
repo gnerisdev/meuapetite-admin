@@ -21,9 +21,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
+import { CloseIcon, AddIcon, RemoveIcon } from 'components/icons';
 import * as S from './ProductModal.style';
 
 const ProductModal = ({ open, product, onClose, onAddToCart, primaryColor, secondaryColor }) => {

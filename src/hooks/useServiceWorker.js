@@ -6,6 +6,24 @@ export const useServiceWorker = () => {
   const [isSupported, setIsSupported] = useState(false);
 
   useEffect(() => {
+    // Não registrar Service Worker em desenvolvimento (Vite)
+    if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
+      console.log('Service Worker desabilitado em desenvolvimento');
+      // Desregistrar qualquer service worker existente em desenvolvimento
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => {
+            registration.unregister().then((success) => {
+              if (success) {
+                console.log('Service Worker desregistrado para desenvolvimento');
+              }
+            });
+          });
+        });
+      }
+      return;
+    }
+    
     // Verificar se o navegador suporta Service Workers e Push Notifications
     if (
       'serviceWorker' in navigator &&

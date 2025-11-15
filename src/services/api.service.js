@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getApiBaseUrl, getApiUrl, getNodeEnv } from '../utils/env'
 
 export class ApiService {
   isAuth = false
@@ -7,8 +8,8 @@ export class ApiService {
   #baseUrl;
 
   constructor(routeAuth = true) {
-    // Suporta tanto REACT_APP_API_BASE_URL quanto REACT_APP_API_URL para compatibilidade
-    this.#baseUrl = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || this.getDefaultBaseUrl();
+    // Suporta tanto VITE_* quanto REACT_APP_* para compatibilidade
+    this.#baseUrl = getApiBaseUrl() || getApiUrl() || this.getDefaultBaseUrl();
     
     if (routeAuth) {
       this.isAuth = true
@@ -138,7 +139,7 @@ export class ApiService {
 
   handleError(error) {
     // Log do erro para debug (apenas em desenvolvimento)
-    if (process.env.NODE_ENV === 'development') {
+    if (getNodeEnv() === 'development') {
       console.error('API Error:', {
         message: error.message,
         code: error.code,

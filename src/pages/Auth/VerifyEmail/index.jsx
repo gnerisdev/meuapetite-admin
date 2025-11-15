@@ -13,12 +13,7 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material';
-import {
-  Email,
-  CheckCircle,
-  Refresh,
-  ArrowBack,
-} from '@mui/icons-material';
+import { EmailIcon as Email, CheckCircleIcon as CheckCircle, RefreshIcon as Refresh, ArrowBackIcon as ArrowBack } from 'components/icons';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import * as S from './style';

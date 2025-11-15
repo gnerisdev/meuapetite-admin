@@ -13,7 +13,7 @@ import {
   Typography,
   Container,
 } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { LockOutlinedIcon } from 'components/icons';
 import { ThemeProvider } from '@mui/material/styles';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';

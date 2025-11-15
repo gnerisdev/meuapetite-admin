@@ -1,4 +1,4 @@
-const { createTheme, styled, Grid } = require("@mui/material");
+import { createTheme, styled, Grid } from "@mui/material";
 
 export const ThemeDark = createTheme({
   palette: {

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, Typography } from '@mui/material';
-import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import { NavigateBeforeIcon } from 'components/icons';
 import * as S from './style';
 
 const Header = (props) => {

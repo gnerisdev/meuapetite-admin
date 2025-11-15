@@ -39,10 +39,31 @@ self.addEventListener('activate', (event) => {
 
 // Interceptar requisições e servir do cache quando offline
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Não interceptar requisições do Vite em desenvolvimento
+  // Bypass completo para requisições do Vite dev server
+  if (
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/node_modules/') ||
+    url.pathname.includes('vite') ||
+    url.pathname.includes('react-refresh') ||
+    url.pathname.includes('@vite') ||
+    url.pathname.includes('?t=') || // Vite adiciona timestamp ?t=...
+    (url.hostname === 'localhost' && url.port && url.port !== '80' && url.port !== '443')
+  ) {
+    // Em desenvolvimento, não interceptar - deixar passar direto
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
         return response || fetch(event.request);
+      })
+      .catch(() => {
+        // Se falhar, tentar fetch novamente
+        return fetch(event.request);
       })
   );
 });

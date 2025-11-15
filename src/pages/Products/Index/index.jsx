@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import EditIcon from '@mui/icons-material/Edit';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import DeleteIcon from '@mui/icons-material/Delete';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
+import { EditIcon, ContentCopyIcon, DeleteIcon, MoreVertIcon, CheckCircleIcon, CancelIcon } from 'components/icons';
 import { useNavigate } from 'react-router-dom';
 import { 
   Button, 

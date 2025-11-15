@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import jsPDFInvoiceTemplate, { OutputType } from "jspdf-invoice-template";
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { KeyboardArrowDownIcon } from 'components/icons';
 import {
   Button,
   Chip,

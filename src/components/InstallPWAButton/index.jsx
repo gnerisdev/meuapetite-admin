@@ -8,13 +8,7 @@ import {
   Slide,
   IconButton
 } from '@mui/material';
-import {
-  GetApp,
-  CheckCircle,
-  PhoneAndroid,
-  DesktopWindows,
-  Close
-} from '@mui/icons-material';
+import { GetAppIcon as GetApp, CheckCircleIcon as CheckCircle, PhoneAndroidIcon as PhoneAndroid, DesktopWindowsIcon as DesktopWindows, CloseIcon as Close } from 'components/icons';
 import { usePWAInstall } from 'hooks/usePWAInstall';
 
 const InstallPWAButton = () => {

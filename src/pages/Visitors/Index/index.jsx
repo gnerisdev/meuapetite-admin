@@ -34,21 +34,21 @@ import {
   Avatar,
   Stack
 } from '@mui/material';
-import {
-  Visibility,
-  Refresh,
-  Smartphone,
-  Computer,
-  Tablet,
-  LocationOn,
-  AccessTime,
-  OpenInNew,
-  List,
-  Map,
-  People,
-  Language,
-  Public
-} from '@mui/icons-material';
+import { 
+  VisibilityIcon as Visibility, 
+  RefreshIcon as Refresh, 
+  SmartphoneIcon as Smartphone, 
+  ComputerIcon as Computer, 
+  TabletIcon as Tablet, 
+  LocationOnIcon as LocationOn, 
+  AccessTimeIcon as AccessTime, 
+  OpenInNewIcon as OpenInNew, 
+  ListIcon as List, 
+  MapIcon as Map, 
+  PeopleIcon as People, 
+  LanguageIcon as Language, 
+  PublicIcon as Public 
+} from 'components/icons';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import Header from 'components/Header';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, AppBar, Toolbar, IconButton, Typography, List, ListItem, Grid } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
+import { CloseIcon } from 'components/icons';
 import * as S from './style';
 
 const OrderDetailsModal = ({ modalView, modalViewClose, order }) => {

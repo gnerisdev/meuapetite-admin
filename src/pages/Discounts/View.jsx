@@ -5,7 +5,7 @@ import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import ButtonUpload from 'components/ButtonUpload'
 import Gallery from 'components/Gallery'
-import Category from '@mui/icons-material/Category'
+import { CategoryIcon as Category } from 'components/icons'
 
 const Create = () => {
   const [images, setImages] = useState([])

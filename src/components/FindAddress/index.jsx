@@ -3,7 +3,7 @@ import { IconButton, useMediaQuery, Tabs, Tab, Box } from '@mui/material';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useTheme } from '@mui/material/styles';
-import CloseIcon from '@mui/icons-material/Close';
+import { CloseIcon } from 'components/icons';
 import AddressCep from './AddressCep';
 import AddressEdit from './AddressEdit';
 import AddressMap from './AddressMap';

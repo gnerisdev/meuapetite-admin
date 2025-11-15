@@ -9,11 +9,7 @@ import {
   Badge,
   Button,
 } from '@mui/material';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import InfoIcon from '@mui/icons-material/Info';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { ShoppingCartIcon, CheckCircleIcon, CancelIcon, InfoIcon, AccessTimeIcon } from 'components/icons';
 import { ApiService } from 'services/api.service';
 import { useVisitorTracking } from 'hooks/useVisitorTracking';
 import ProductModal from './components/ProductModal';

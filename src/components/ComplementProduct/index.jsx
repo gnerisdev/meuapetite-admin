@@ -11,8 +11,7 @@ import {
   Box,
   IconButton,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { AddIcon, DeleteOutlineIcon } from 'components/icons';
 import { propsTextField } from 'utils/form';
 import * as S from './style';
 

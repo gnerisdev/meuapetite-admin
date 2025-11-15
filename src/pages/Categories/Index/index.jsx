@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Switch, Button,  Menu, Box, IconButton } from '@mui/material';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { MoreVertIcon } from 'components/icons';
 import PopupState, { bindMenu, bindTrigger } from 'material-ui-popup-state';
 import Header from 'components/Header';
 import { GlobalContext } from 'contexts/Global';

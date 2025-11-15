@@ -17,7 +17,7 @@ import {
   Chip,
   Divider
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { AddIcon, DeleteIcon } from 'components/icons';
 import { ApiService } from 'services/api.service';
 import { GlobalContext } from 'contexts/Global';
 import { ApplicationUtils } from 'utils/ApplicationUtils';

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiService } from 'services/api.service';
+import { getApiBaseUrl, getApiUrl } from 'utils/env';
 
 // Função para detectar dispositivo
 const detectDevice = () => {
@@ -79,7 +80,7 @@ export const useVisitorTracking = (companyId) => {
             // Se GPS falhar, tentar geolocalização por IP
             console.log('GPS não disponível, tentando IP:', error.message);
             try {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || 
+              const baseUrl = getApiBaseUrl() || getApiUrl() || 
                 (typeof window !== 'undefined' 
                   ? `${window.location.protocol}//${window.location.hostname}:3000/api`
                   : 'http://localhost:3000/api');

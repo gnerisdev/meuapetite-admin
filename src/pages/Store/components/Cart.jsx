@@ -18,17 +18,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import StoreIcon from '@mui/icons-material/Store';
-import PaymentIcon from '@mui/icons-material/Payment';
-import PersonIcon from '@mui/icons-material/Person';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import { CloseIcon, DeleteIcon, AddIcon, RemoveIcon, ShoppingCartIcon, LocalShippingIcon, StoreIcon, PaymentIcon, PersonIcon, LocationOnIcon, WhatsAppIcon } from 'components/icons';
 import * as S from './Cart.style';
 
 const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryColor, secondaryColor, trackCartEvent }) => {

@@ -16,8 +16,9 @@ import {
   Divider,
   Alert
 } from '@mui/material';
-import { QrCode2, TrendingUp, ShoppingCart, AttachMoney, LocalShipping, Restaurant, WhatsApp } from '@mui/icons-material';
+import { QrCode2Icon as QrCode2, TrendingUpIcon as TrendingUp, ShoppingCartIcon as ShoppingCart, AttachMoneyIcon as AttachMoney, LocalShippingIcon as LocalShipping, RestaurantIcon as Restaurant, WhatsAppIcon as WhatsApp } from 'components/icons';
 import QRCode from 'react-qr-code';
+import { getMenuBaseUrl } from 'utils/env';
 import Chart from 'chart.js/auto';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { ApiService } from 'services/api.service';
@@ -249,6 +250,21 @@ const Home = () => {
           </Typography>
           <Typography variant="caption">
             Para colocar sua loja online, é necessário preencher o endereço do seu negócio.
+          </Typography>
+        </Alert>
+      )}
+
+      {/* Alerta para configurar slug */}
+      {!company?.storeUrl && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 3 }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Slug da loja não configurado
+          </Typography>
+          <Typography variant="caption">
+            Para colocar sua loja online, é necessário configurar o slug da loja.
           </Typography>
         </Alert>
       )}
@@ -588,7 +604,7 @@ const Home = () => {
               width: 'fit-content'
             }}>
               <QRCode 
-                value={`${process.env.REACT_APP_MENU_BASE_URL || window.location.origin}/store/${company.storeUrl}`}
+                value={`${getMenuBaseUrl() || window.location.origin}/store/${company.storeUrl}`}
                 size={200}
                 style={{ maxWidth: '100%', height: 'auto' }}
               />
@@ -607,7 +623,7 @@ const Home = () => {
                 px: 1
               }}
             >
-              {process.env.REACT_APP_MENU_BASE_URL || window.location.origin}/store/{company.storeUrl}
+              {getMenuBaseUrl() || window.location.origin}/store/{company.storeUrl}
             </Typography>
           </Box>
         </DialogContent>

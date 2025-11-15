@@ -2,11 +2,24 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Copiar arquivos de dependências primeiro (para cache do Docker)
 COPY package*.json ./
-RUN npm install
 
+# Instalar dependências com cache otimizado
+# Usa npm ci se package-lock.json existir, senão usa npm install
+RUN if [ -f package-lock.json ]; then \
+      npm ci --legacy-peer-deps; \
+    else \
+      npm install --legacy-peer-deps; \
+    fi && \
+    npm cache clean --force
+
+# Copiar código da aplicação
 COPY . .
 
-EXPOSE 3001
+EXPOSE 8000
+
+# Variáveis de ambiente para Vite
+ENV NODE_ENV=development
 
 CMD ["npm", "start"]

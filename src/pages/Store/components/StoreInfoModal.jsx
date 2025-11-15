@@ -9,9 +9,7 @@ import {
   Divider,
   Grid,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { CloseIcon, LocationOnIcon, AccessTimeIcon } from 'components/icons';
 import * as S from './StoreInfoModal.style';
 
 const StoreInfoModal = ({ open, onClose, store, primaryColor }) => {
