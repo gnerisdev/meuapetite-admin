@@ -267,6 +267,10 @@ const Index = () => {
                                 {...bindTrigger(popupState)}
                                 sx={{ 
                                   bgcolor: 'rgba(255, 255, 255, 0.9)',
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: '50%',
+                                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                                   '&:hover': { bgcolor: 'rgba(255, 255, 255, 1)' }
                                 }}
                                 size="small"

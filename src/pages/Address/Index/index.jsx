@@ -21,7 +21,8 @@ const Address = () => {
   const [openEditorAddress, setOpenEditorAddress] = useState(false);
 
   const getAddress = async () => {
-    if (!company?.address?.zipCode) return;
+    // Verificar se há endereço válido (street e city são universais)
+    if (!company?.address?.street || !company?.address?.city) return;
     setData(company.address);
   };
 
@@ -63,7 +64,7 @@ const Address = () => {
           <Grid item xs={12} sm={12}>
             <span>
               {
-                data.zipCode.length >= 8
+                data.street && data.city
                   ? 'Para mudar o endereço clique em "NOVO ENDEREÇO"'
                   : 'Registre o endereço para o seu negócio! Isso nos ajuda'
                   + ' a calcular o custo de entrega ou facilita para o'
@@ -71,13 +72,13 @@ const Address = () => {
               }
             </span>
           </Grid>
-          {data.zipCode.length >= 8 && (
+          {data.street && data.city && (
             <>
               <Grid item xs={12} sm={12}>
                 <TextField
                   disabled
-                  label="Cep"
-                  value={data.zipCode}
+                  label="Cep/Código Postal"
+                  value={data.zipCode || ''}
                   {...propsTextField}
                 />
               </Grid>
@@ -89,6 +90,26 @@ const Address = () => {
                   {...propsTextField}
                 />
               </Grid>
+              {data.state && (
+                <Grid item xs={12} sm={12}>
+                  <TextField
+                    disabled
+                    label="Estado/Província"
+                    value={data.state}
+                    {...propsTextField}
+                  />
+                </Grid>
+              )}
+              {data.country && (
+                <Grid item xs={12} sm={12}>
+                  <TextField
+                    disabled
+                    label="País"
+                    value={data.country}
+                    {...propsTextField}
+                  />
+                </Grid>
+              )}
               <Grid item xs={12} sm={12}>
                 <TextField
                   disabled

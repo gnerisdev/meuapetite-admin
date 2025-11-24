@@ -37,6 +37,7 @@ const Create = () => {
   const [tabValue, setTabValue] = useState(0);
   const [colorPrimary, setColorPrimary] = useState('');
   const [colorSecondary, setColorSecondary] = useState('');
+  const [whatsappFixed, setWhatsappFixed] = useState(false);
 
   const handleTabChange = (event, newValue) => setTabValue(newValue);
 
@@ -50,6 +51,7 @@ const Create = () => {
       const response = await apiService.put('/admin/company/appearance', {
         colorPrimary: form.get('colorPrimary'),
         colorSecondary: form.get('colorSecondary'),
+        whatsappFixed: whatsappFixed,
       });
       setCompany(response.data);
     } catch (error) {
@@ -152,6 +154,7 @@ const Create = () => {
     setColorSecondary(secondary);
     setLogo(company.custom.logo?.url);
     setBackgroundImage(company.custom.backgroundImage?.url);
+    setWhatsappFixed(company.settings?.whatsappFixed || false);
   }, [company]);
 
   const handleColorChange = (colorType, value) => {
@@ -308,6 +311,45 @@ const Create = () => {
                       </Box>
                     </Grid>
                   </Grid>
+
+                  <Divider sx={{ my: 3 }} />
+
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                      WhatsApp Fixo
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                      Ative para exibir um botão fixo de WhatsApp no canto inferior direito da loja.
+                    </Typography>
+                    
+                    <Card variant="outlined">
+                      <CardContent>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={whatsappFixed}
+                              onChange={(e) => setWhatsappFixed(e.target.checked)}
+                              color="primary"
+                              size="medium"
+                            />
+                          }
+                          label={
+                            <Box>
+                              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                Botão WhatsApp Fixo
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {whatsappFixed 
+                                  ? 'Botão fixo ativado na loja' 
+                                  : 'Botão fixo desativado'}
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{ m: 0 }}
+                        />
+                      </CardContent>
+                    </Card>
+                  </Box>
 
                   <Divider sx={{ my: 3 }} />
 

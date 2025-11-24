@@ -7,7 +7,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { LanguageIcon } from 'components/icons';
+import { KeyboardArrowDownIcon } from 'components/icons';
 import { useTranslation } from 'react-i18next';
 import { useI18n } from 'contexts/I18nContext';
 
@@ -16,6 +16,13 @@ const LanguageSelector = ({ forStore = false }) => {
   const { languages, setStoreLanguage, storeLanguage, adminLanguage, setAdminLanguage } = useI18n();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  // Mapeamento de bandeiras para cada idioma
+  const flagMap = {
+    'pt-BR': '🇧🇷',
+    'fr': '🇫🇷',
+    'es': '🇪🇸',
+  };
 
   // Obter idioma atual da loja (preferência do usuário ou padrão do admin)
   const getStoreCurrentLanguage = () => {
@@ -28,6 +35,7 @@ const LanguageSelector = ({ forStore = false }) => {
 
   const currentLanguage = getStoreCurrentLanguage();
   const currentLanguageName = languages.find(lang => lang.code === currentLanguage)?.name || currentLanguage;
+  const currentFlag = flagMap[currentLanguage] || '🌐';
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -60,16 +68,31 @@ const LanguageSelector = ({ forStore = false }) => {
       <IconButton
         onClick={handleClick}
         sx={{
-          color: 'inherit',
-          padding: '8px',
+          bgcolor: forStore ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
+          color: forStore ? '#333333' : 'inherit',
+          padding: forStore ? '4px 12px' : { xs: '8px', sm: '10px' },
+          height: forStore ? '32px' : 'auto',
+          minWidth: forStore ? 'auto' : 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          borderRadius: forStore ? '16px' : '50%',
+          backdropFilter: forStore ? 'blur(10px)' : 'none',
+          boxShadow: forStore ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
           '&:hover': {
-            bgcolor: 'rgba(0, 0, 0, 0.04)',
+            bgcolor: forStore ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 0.04)',
+            transform: forStore ? 'scale(1.05)' : 'none',
+            boxShadow: forStore ? '0 4px 12px rgba(0,0,0,0.3)' : 'none',
           },
+          transition: 'all 0.2s ease',
         }}
         aria-label="Selecionar idioma"
         title={forStore ? t('common.selectLanguage') : 'Selecionar idioma'}
       >
-        <LanguageIcon />
+        <Box component="span" sx={{ fontSize: '1.25rem', lineHeight: 1 }}>
+          {currentFlag}
+        </Box>
+        <KeyboardArrowDownIcon sx={{ fontSize: '0.875rem' }} />
       </IconButton>
       <Menu
         anchorEl={anchorEl}
@@ -90,9 +113,13 @@ const LanguageSelector = ({ forStore = false }) => {
             selected={currentLanguage === lang.code}
             onClick={() => handleLanguageChange(lang.code)}
             sx={{
-              minWidth: '150px',
+              minWidth: '180px',
+              gap: 1.5,
             }}
           >
+            <Box component="span" sx={{ fontSize: '1.5rem', lineHeight: 1 }}>
+              {flagMap[lang.code] || '🌐'}
+            </Box>
             <ListItemText
               primary={lang.name}
               secondary={currentLanguage === lang.code ? t('common.selected') || 'Selecionado' : ''}

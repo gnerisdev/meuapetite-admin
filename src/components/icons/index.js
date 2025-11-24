@@ -27,6 +27,7 @@ export const ContentCopyIcon = createIcon('copy');
 export const StoreIcon = createIcon('store');
 export const StorefrontIcon = createIcon('store-alt');
 export const ShoppingCartIcon = createIcon('shopping-cart');
+export const ShoppingBagIcon = createIcon('shopping-bag');
 export const LocalShippingIcon = createIcon('motorcycle');
 export const PaymentIcon = createIcon('credit-card');
 export const PersonIcon = createIcon('user');
@@ -62,6 +63,9 @@ export const DesktopWindowsIcon = createIcon('desktop');
 export const EmailIcon = createIcon('envelope');
 export const ArrowBackIcon = createIcon('arrow-left');
 export const UploadIcon = createIcon('upload');
+export const DownloadIcon = createIcon('download');
+export const TableChartIcon = createIcon('table');
+export const PictureAsPdfIcon = createIcon('file-pdf');
 
 // Exportar o componente base também
 export { FontAwesomeIcon };

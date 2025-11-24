@@ -62,10 +62,6 @@ export const CardCustom = styled(Card)(({ theme }) => ({
       '&::after': {
         opacity: 1,
       }
-    },
-    '& .overlay-actions': {
-      opacity: 1,
-      visibility: 'visible',
     }
   }
 }));
@@ -73,7 +69,7 @@ export const CardCustom = styled(Card)(({ theme }) => ({
 export const CardMediaWrapper = styled('div')(({ theme }) => ({
   position: 'relative',
   width: '100%',
-  paddingTop: '75%', // 4:3 aspect ratio
+  paddingTop: '75%',
   overflow: 'hidden',
   backgroundColor: theme.palette.grey[100],
   '&::after': {
@@ -108,8 +104,8 @@ export const OverlayActions = styled('div')(({ theme }) => ({
   top: theme.spacing(1),
   right: theme.spacing(1),
   zIndex: 2,
-  opacity: 0,
-  visibility: 'hidden',
+  opacity: 1,
+  visibility: 'visible',
   transition: 'all 0.3s ease',
   display: 'flex',
   gap: theme.spacing(0.5),
@@ -133,7 +129,6 @@ export const CardContentCustom = styled(CardContent)(({ theme }) => ({
 export const CardInfo = styled('div')({
   display: 'flex',
   flexDirection: 'column'
-
 });
 
 export const Description = styled('p')({

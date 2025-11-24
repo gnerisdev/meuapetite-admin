@@ -20,8 +20,12 @@ import Settings_Language from 'pages/Settings/Settings_Language';
 import OpeningHours from 'pages/OpeningHours/Index';
 import Payment_InDelivery from 'pages/PaymentMethod/Payment_InDelivery';
 import Financial from 'pages/Financial/Index';
+import Reports from 'pages/Reports/Index';
 import Terms from 'pages/Terms';
 import Visitors from 'pages/Visitors/Index';
+import Coupons from 'pages/Coupons/Index';
+import CouponsCreate from 'pages/Coupons/Create';
+import CouponsUpdate from 'pages/Coupons/Update';
 import AdminLayout from 'layouts/Admin';
 import VerifyEmail from 'pages/Auth/VerifyEmail';
 
@@ -51,7 +55,13 @@ const adminRoutes = [
 
       { path: 'financial', element: <Financial /> },
 
+      { path: 'reports', element: <Reports /> },
+
       { path: 'visitors', element: <Visitors /> },
+
+      { path: 'coupons', element: <Coupons /> },
+      { path: 'coupons/create', element: <CouponsCreate /> },
+      { path: 'coupons/update/:id', element: <CouponsUpdate /> },
 
       { path: 'opening-hours', element: <OpeningHours /> },
 

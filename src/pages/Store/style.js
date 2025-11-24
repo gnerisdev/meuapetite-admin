@@ -9,9 +9,16 @@ export const StoreContainer = styled('div')({
 
 export const StoreHeader = styled('div')({
   background: '#ffffff',
-  padding: '24px 20px',
   borderBottom: '1px solid #e8e8e8',
   boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+});
+
+export const StoreBanner = styled('div')({
+  width: '100%',
+  overflow: 'hidden',
+  position: 'relative',
+  marginBottom: 0,
+  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
 });
 
 export const OpeningHours = styled('div')({
@@ -26,6 +33,31 @@ export const ProductsSection = styled('section')({
   padding: '24px 0',
   backgroundColor: '#ffffff',
 });
+
+export const CategoryHeader = styled('div')(({ $primaryColor }) => ({
+  position: 'sticky',
+  top: 0,
+  zIndex: 90,
+  backgroundColor: '#ffffff',
+  paddingTop: '20px',
+  paddingBottom: '12px',
+  marginTop: '-20px',
+  marginBottom: '20px',
+  borderRadius: '0 0 8px 8px',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+  transition: 'all 0.3s ease',
+  backdropFilter: 'blur(10px)',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    height: '3px',
+    background: `linear-gradient(90deg, ${$primaryColor || '#800080'} 0%, ${$primaryColor || '#800080'}80 50%, transparent 100%)`,
+    borderRadius: '0 0 8px 8px',
+  },
+}));
 
 export const ProductCard = styled(Card)(({ $primaryColor }) => ({
   height: '100%',

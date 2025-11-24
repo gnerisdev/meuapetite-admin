@@ -170,10 +170,7 @@ const Index = () => {
 
   return (
     <>
-      <Header
-        title="Ordenação"
-        back={-1}
-      />
+      <Header title="Ordenação" back={-1}b/>
 
       <S.ContainerCategories>
         {categories.map((item, indexCat) => (
@@ -328,4 +325,3 @@ const Index = () => {
 }
 
 export default Index;
-

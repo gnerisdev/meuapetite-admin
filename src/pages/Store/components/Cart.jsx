@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Drawer,
   Box,
@@ -18,10 +18,13 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { CloseIcon, DeleteIcon, AddIcon, RemoveIcon, ShoppingCartIcon, LocalShippingIcon, StoreIcon, PaymentIcon, PersonIcon, LocationOnIcon, WhatsAppIcon } from 'components/icons';
+import { CloseIcon, DeleteIcon, AddIcon, RemoveIcon, ShoppingBagIcon, LocalShippingIcon, StoreIcon, PaymentIcon, PersonIcon, LocationOnIcon, WhatsAppIcon } from 'components/icons';
+import { useTranslation } from 'react-i18next';
+import BackdropLoading from 'components/BackdropLoading';
 import * as S from './Cart.style';
 
 const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryColor, secondaryColor, trackCartEvent }) => {
+  const { t } = useTranslation('store');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [loading, setLoading] = useState(false);
@@ -38,40 +41,104 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
   const [paymentMethod, setPaymentMethod] = useState('');
   const [savingClientData, setSavingClientData] = useState(false);
   const [savingAddress, setSavingAddress] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [hasAvailableCoupons, setHasAvailableCoupons] = useState(false);
+  const [showCouponField, setShowCouponField] = useState(false);
+  const [checkingCoupons, setCheckingCoupons] = useState(false);
 
+  // Verificar se há cupons disponíveis
   useEffect(() => {
-    if (cart?.client) {
+    const checkCoupons = async () => {
+      if (!store?._id || checkingCoupons) return;
+      
+      try {
+        setCheckingCoupons(true);
+        const { data } = await apiService.get(`/menu/check-coupons?companyId=${store._id}`);
+        if (data && data.success) {
+          setHasAvailableCoupons(data.hasAvailableCoupons || false);
+          // Se já tem cupom aplicado, mostrar o campo
+          if (cart?.coupon?.code) {
+            setShowCouponField(true);
+          }
+        } else {
+          // Se a resposta não foi bem-sucedida, ainda verificar se tem cupom aplicado
+          if (cart?.coupon?.code) {
+            setHasAvailableCoupons(true);
+            setShowCouponField(true);
+          } else {
+            setHasAvailableCoupons(false);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar cupons:', error);
+        console.error('Detalhes do erro:', error.response?.data);
+        // Em caso de erro, ainda mostrar se já tem cupom aplicado
+        // Ou permitir que o usuário tente inserir um cupom (pode haver cupons mesmo se a verificação falhar)
+        if (cart?.coupon?.code) {
+          setHasAvailableCoupons(true);
+          setShowCouponField(true);
+        } else {
+          // Permitir tentar inserir cupom mesmo se a verificação falhar
+          // A validação será feita ao aplicar
+          setHasAvailableCoupons(true);
+        }
+      } finally {
+        setCheckingCoupons(false);
+      }
+    };
+
+    if (store?._id && open) {
+      checkCoupons();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store?._id, open]);
+
+  // Inicializar dados do carrinho apenas uma vez quando o carrinho muda
+  useEffect(() => {
+    if (cart?.client && (!clientData.name || !clientData.phoneNumber)) {
       setClientData(cart.client);
     }
-    if (cart?.deliveryType) {
+    if (cart?.deliveryType && deliveryType !== cart.deliveryType) {
       setDeliveryType(cart.deliveryType);
     }
-    if (cart?.address) {
+    if (cart?.address && (!addressData.street || !addressData.number)) {
       setAddressData(prev => ({ ...prev, ...cart.address }));
     }
-  }, [cart]);
+    if (cart?.coupon?.code && !couponCode) {
+      setCouponCode(cart.coupon.code);
+      setShowCouponField(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart?._id]);
 
-  // Rastrear abertura do carrinho
+  // Rastrear abertura do carrinho - memoizar cartItems para evitar recriação
+  const cartItems = useMemo(() => {
+    if (!cart?.products) return [];
+    return cart.products.map(p => ({
+      productId: p.productId,
+      productName: p.productName,
+      quantity: p.quantity,
+      variations: p.complements,
+      price: p.price
+    }));
+  }, [cart?.products]);
+
   useEffect(() => {
-    if (open && store?._id && cart?.products?.length > 0 && trackCartEvent) {
-      const cartItems = cart.products.map(p => ({
-        productId: p.productId,
-        productName: p.productName,
-        quantity: p.quantity,
-        variations: p.complements,
-        price: p.price
-      }));
+    if (open && store?._id && cartItems.length > 0 && trackCartEvent) {
       trackCartEvent('open', null, null, null, cartItems);
     }
-  }, [open, store?._id, cart?.products, trackCartEvent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, store?._id, cartItems.length]);
 
-  // Salvar dados do cliente automaticamente quando preenchidos
+  // Salvar dados do cliente automaticamente quando preenchidos - otimizado com debounce maior
   useEffect(() => {
     if (!clientData.name || !clientData.phoneNumber || !cart?._id || savingClientData) {
       return;
     }
 
-    // Aguardar um pouco para evitar muitas requisições
+    // Aguardar mais tempo para evitar muitas requisições (debounce de 1.5s)
     const timeoutId = setTimeout(async () => {
       try {
         setSavingClientData(true);
@@ -85,13 +152,13 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
       } finally {
         setSavingClientData(false);
       }
-    }, 1000); // Aguardar 1 segundo após parar de digitar
+    }, 1500); // Aguardar 1.5 segundos após parar de digitar
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientData.name, clientData.phoneNumber, cart?._id]);
 
-  const updateProductQuantity = async (productIndex, delta) => {
+  const updateProductQuantity = useCallback(async (productIndex, delta) => {
     if (!cart) return;
 
     const updatedProducts = [...cart.products];
@@ -117,9 +184,9 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
     } catch (error) {
       console.error('Erro ao atualizar carrinho:', error);
     }
-  };
+  }, [cart, store?._id, apiService, onUpdateCart]);
 
-  const removeProduct = async (productIndex) => {
+  const removeProduct = useCallback(async (productIndex) => {
     const product = cart.products[productIndex];
     await updateProductQuantity(productIndex, -cart.products[productIndex].quantity);
     
@@ -137,9 +204,9 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
       
       trackCartEvent('remove', product.productId, product.productName, product.complements, updatedCartItems);
     }
-  };
+  }, [cart, updateProductQuantity, store?._id, trackCartEvent]);
 
-  const handleDeliveryTypeChange = async (newType) => {
+  const handleDeliveryTypeChange = useCallback(async (newType) => {
     setDeliveryType(newType);
     try {
       setLoading(true);
@@ -153,9 +220,9 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
     } finally {
       setLoading(false);
     }
-  };
+  }, [cart?._id, apiService, onUpdateCart]);
 
-  const handleAddressSubmit = async () => {
+  const handleAddressSubmit = useCallback(async () => {
     // Só calcular se for automático e tiver kmValue
     if (store?.settingsDelivery?.deliveryOption !== 'automatic' || !store?.settingsDelivery?.kmValue) {
       return;
@@ -171,13 +238,13 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
       onUpdateCart(data);
     } catch (error) {
       console.error('Erro ao calcular frete:', error);
-      alert('Erro ao calcular frete. Verifique os dados do endereço.');
+      alert(t('cart.calculateFreightError'));
     } finally {
       setSavingAddress(false);
     }
-  };
+  }, [store?.settingsDelivery?.deliveryOption, store?.settingsDelivery?.kmValue, store?._id, cart?._id, addressData, apiService, onUpdateCart, t]);
 
-  // Calcular frete automaticamente quando for fixed
+  // Calcular frete automaticamente quando for fixed - otimizado com debounce maior
   useEffect(() => {
     if (
       deliveryType === 'delivery' && 
@@ -203,7 +270,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
         } finally {
           setSavingAddress(false);
         }
-      }, 1000);
+      }, 1500); // Aumentado para 1.5s para reduzir requisições
 
       return () => clearTimeout(timeoutId);
     }
@@ -213,17 +280,17 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
   const handleFinishOrder = async () => {
     // Validações
     if (!clientData.name || !clientData.phoneNumber) {
-      alert('Por favor, preencha os dados do cliente (nome e telefone são obrigatórios)');
+      alert(t('cart.fillClientData'));
       return;
     }
 
     if (deliveryType === 'delivery' && (!addressData.street || !addressData.number || !addressData.district || !addressData.city)) {
-      alert('Por favor, preencha todos os dados do endereço de entrega');
+      alert(t('cart.fillAddressData'));
       return;
     }
 
     if (!paymentMethod) {
-      alert('Por favor, selecione uma forma de pagamento');
+      alert(t('cart.selectPaymentMethod'));
       return;
     }
 
@@ -261,6 +328,11 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
       });
 
       if (data.success && data.whatsappLink && data.companyWhatsapp) {
+        // Limpar carrinho do localStorage
+        if (store?._id) {
+          localStorage.removeItem(`cart_${store._id}`);
+        }
+        
         // Abrir WhatsApp com a mensagem formatada
         window.open(data.whatsappLink, '_blank');
         
@@ -268,24 +340,82 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
         onClose();
         window.location.href = `/store/${store.storeUrl}/order/${data.order.id}?confirm=true`;
       } else if (data.success) {
+        // Limpar carrinho do localStorage
+        if (store?._id) {
+          localStorage.removeItem(`cart_${store._id}`);
+        }
+        
         // Caso não tenha WhatsApp cadastrado, apenas redirecionar
-        alert('Pedido realizado com sucesso!');
+        alert(t('cart.orderSuccess'));
         onClose();
         window.location.href = `/store/${store.storeUrl}/order/${data.order.id}`;
       }
     } catch (error) {
       console.error('Erro ao finalizar pedido:', error);
-      alert('Erro ao finalizar pedido. Tente novamente.');
+      alert(t('cart.orderError'));
     } finally {
       setLoading(false);
     }
   };
 
-  const subtotal = cart?.subtotal || 0;
-  const deliveryFee = cart?.address?.price || 0;
-  const total = cart?.total || subtotal;
+  const handleApplyCoupon = useCallback(async () => {
+    if (!couponCode.trim() || !cart?._id || !store?._id) {
+      return;
+    }
 
-  const paymentMethods = store?.settingsPayment?.methods?.type || [];
+    try {
+      setApplyingCoupon(true);
+      setCouponError('');
+      const { data } = await apiService.post('/menu/apply-coupon', {
+        cartId: cart._id,
+        companyId: store._id,
+        couponCode: couponCode.trim(),
+      });
+
+      if (data.success) {
+        onUpdateCart(data);
+        setCouponError('');
+      } else {
+        setCouponError(data.message || t('cart.couponError'));
+      }
+    } catch (error) {
+      console.error('Erro ao aplicar cupom:', error);
+      setCouponError(error.response?.data?.message || t('cart.couponError'));
+    } finally {
+      setApplyingCoupon(false);
+    }
+  }, [couponCode, cart?._id, store?._id, apiService, onUpdateCart, t]);
+
+  const handleRemoveCoupon = useCallback(async () => {
+    if (!cart?._id) {
+      return;
+    }
+
+    try {
+      setApplyingCoupon(true);
+      const { data } = await apiService.post('/menu/remove-coupon', {
+        cartId: cart._id,
+      });
+
+      if (data.success) {
+        onUpdateCart(data);
+        setCouponCode('');
+        setCouponError('');
+      }
+    } catch (error) {
+      console.error('Erro ao remover cupom:', error);
+    } finally {
+      setApplyingCoupon(false);
+    }
+  }, [cart?._id, apiService, onUpdateCart]);
+
+  // Memoizar cálculos para evitar recálculos desnecessários
+  const subtotal = useMemo(() => cart?.subtotal || 0, [cart?.subtotal]);
+  const deliveryFee = useMemo(() => cart?.address?.price || 0, [cart?.address?.price]);
+  const couponDiscount = useMemo(() => cart?.coupon?.discountAmount || 0, [cart?.coupon?.discountAmount]);
+  const total = useMemo(() => cart?.total || subtotal, [cart?.total, subtotal]);
+  const paymentMethods = useMemo(() => store?.settingsPayment?.methods?.type || [], [store?.settingsPayment?.methods?.type]);
+  const totalItemsCount = useMemo(() => cart?.products?.reduce((sum, p) => sum + p.quantity, 0) || 0, [cart?.products]);
 
   return (
     <Drawer
@@ -302,9 +432,9 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
     >
       <S.CartHeader $primaryColor={primaryColor}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ShoppingCartIcon />
+          <ShoppingBagIcon />
           <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>
-            Carrinho
+            {t('cart.title')}
           </Typography>
         </Box>
         <IconButton onClick={onClose} sx={{ color: '#fff' }}>
@@ -315,9 +445,9 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
       <S.CartContent>
         {!cart || !cart.products || cart.products.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
-            <ShoppingCartIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <ShoppingBagIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              Seu carrinho está vazio
+              {t('cart.empty')}
             </Typography>
           </Box>
         ) : (
@@ -327,10 +457,10 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Itens ({cart.products.length})
+                    {t('cart.items')} ({cart.products.length})
                   </Typography>
                   <Chip 
-                    label={cart.products.reduce((sum, p) => sum + p.quantity, 0)} 
+                    label={totalItemsCount} 
                     size="small" 
                     sx={{ bgcolor: primaryColor, color: '#fff' }}
                   />
@@ -373,7 +503,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                         )}
                         {product.comment && (
                           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic', mb: 0.5 }}>
-                            Obs: {product.comment}
+                            {t('product.comment')}: {product.comment}
                           </Typography>
                         )}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
@@ -422,7 +552,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <PersonIcon sx={{ color: primaryColor }} />
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Seus Dados
+                    {t('cart.clientInfo')}
                   </Typography>
                   {savingClientData && (
                     <CircularProgress size={16} sx={{ ml: 1 }} />
@@ -430,7 +560,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                 </Box>
                 <TextField
                   fullWidth
-                  label="Nome *"
+                  label={`${t('cart.name')} *`}
                   value={clientData.name}
                   onChange={(e) => setClientData({ ...clientData, name: e.target.value })}
                   margin="dense"
@@ -439,7 +569,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                 />
                 <TextField
                   fullWidth
-                  label="Telefone *"
+                  label={`${t('cart.phone')} *`}
                   value={clientData.phoneNumber}
                   onChange={(e) => setClientData({ ...clientData, phoneNumber: e.target.value })}
                   margin="dense"
@@ -448,7 +578,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                 />
                 <TextField
                   fullWidth
-                  label="Email (opcional)"
+                  label={`${t('cart.email')} (${t('product.optional')})`}
                   type="email"
                   value={clientData.email}
                   onChange={(e) => setClientData({ ...clientData, email: e.target.value })}
@@ -467,7 +597,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                     <LocalShippingIcon sx={{ color: primaryColor }} />
                   )}
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Entrega
+                    {t('cart.deliveryType')}
                   </Typography>
                 </Box>
                 <FormControl component="fieldset" fullWidth>
@@ -482,7 +612,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                         label={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <StoreIcon />
-                            <Typography>Retirada na loja</Typography>
+                            <Typography>{t('cart.pickup')}</Typography>
                           </Box>
                         }
                       />
@@ -494,7 +624,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                         label={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <LocalShippingIcon />
-                            <Typography>Delivery</Typography>
+                            <Typography>{t('cart.delivery')}</Typography>
                           </Box>
                         }
                       />
@@ -508,12 +638,12 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                       <LocationOnIcon sx={{ color: primaryColor }} />
                       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                        Endereço de Entrega
+                        {t('cart.address')} {t('cart.delivery')}
                       </Typography>
                     </Box>
                     <TextField
                       fullWidth
-                      label="CEP"
+                      label={t('cart.zipCode')}
                       value={addressData.zipCode}
                       onChange={(e) => setAddressData({ ...addressData, zipCode: e.target.value })}
                       margin="dense"
@@ -521,7 +651,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                     />
                     <TextField
                       fullWidth
-                      label="Rua *"
+                      label={`${t('cart.street')} *`}
                       value={addressData.street}
                       onChange={(e) => setAddressData({ ...addressData, street: e.target.value })}
                       margin="dense"
@@ -531,7 +661,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                     <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                       <TextField
                         fullWidth
-                        label="Número *"
+                        label={`${t('cart.number')} *`}
                         value={addressData.number}
                         onChange={(e) => setAddressData({ ...addressData, number: e.target.value })}
                         margin="dense"
@@ -539,7 +669,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                       />
                       <TextField
                         fullWidth
-                        label="Bairro *"
+                        label={`${t('cart.district')} *`}
                         value={addressData.district}
                         onChange={(e) => setAddressData({ ...addressData, district: e.target.value })}
                         margin="dense"
@@ -548,7 +678,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                     </Box>
                     <TextField
                       fullWidth
-                      label="Cidade *"
+                      label={`${t('cart.city')} *`}
                       value={addressData.city}
                       onChange={(e) => setAddressData({ ...addressData, city: e.target.value })}
                       margin="dense"
@@ -557,7 +687,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                     />
                     <TextField
                       fullWidth
-                      label="Referência (opcional)"
+                      label={`${t('cart.reference')} (${t('product.optional')})`}
                       value={addressData.reference}
                       onChange={(e) => setAddressData({ ...addressData, reference: e.target.value })}
                       margin="dense"
@@ -580,7 +710,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                         disabled={savingAddress || !addressData.street || !addressData.number || !addressData.district || !addressData.city}
                         fullWidth
                       >
-                        {savingAddress ? <CircularProgress size={20} /> : 'Calcular Frete'}
+                        {savingAddress ? <CircularProgress size={20} /> : t('cart.calculateFreight')}
                       </Button>
                     )}
 
@@ -588,10 +718,10 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                     {store?.settingsDelivery?.deliveryOption === 'fixed' && (
                       <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
                         <Typography variant="body2" color="text.secondary">
-                          Taxa de entrega: {
+                          {t('cart.deliveryFee')}: {
                             store.settingsDelivery.fixedValue > 0 
                               ? store.settingsDelivery.fixedValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                              : 'Grátis'
+                              : t('cart.free')
                           }
                         </Typography>
                       </Box>
@@ -600,14 +730,14 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                     {store?.settingsDelivery?.deliveryOption === 'customerPickup' && (
                       <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
                         <Typography variant="body2" color="text.secondary">
-                          Taxa de entrega: À combinar com a loja
+                          {t('cart.deliveryFee')}: {t('cart.toArrange')}
                         </Typography>
                       </Box>
                     )}
 
                     {store?.settingsDelivery?.deliveryOption === 'automatic' && deliveryFee > 0 && (
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
-                        Taxa de entrega: {deliveryFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {t('cart.deliveryFee')}: {deliveryFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </Typography>
                     )}
                   </Box>
@@ -621,7 +751,7 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <PaymentIcon sx={{ color: primaryColor }} />
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Forma de Pagamento
+                    {t('cart.paymentMethod')}
                   </Typography>
                 </Box>
                 {paymentMethods.length > 0 ? (
@@ -654,40 +784,173 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
                   </FormControl>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
-                    Nenhuma forma de pagamento disponível
+                    {t('cart.noPaymentMethod')}
                   </Typography>
                 )}
               </CardContent>
             </Card>
+
+            {/* Cupom de Desconto - Só aparece se houver cupons disponíveis ou se já tiver cupom aplicado */}
+            {(hasAvailableCoupons || cart?.coupon?.code) && (
+              <Card sx={{ mb: 2, borderRadius: 2, boxShadow: 2 }}>
+                <CardContent>
+                  {cart?.coupon?.code ? (
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      p: 1.5,
+                      bgcolor: '#e8f5e9',
+                      borderRadius: 1,
+                    }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#00a859', fontSize: '0.875rem' }}>
+                          {t('cart.couponApplied')}: {cart.coupon.code}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#666', fontSize: '0.75rem' }}>
+                          {t('cart.discount')}: {couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </Typography>
+                      </Box>
+                      <Button
+                        size="small"
+                        onClick={handleRemoveCoupon}
+                        disabled={applyingCoupon}
+                        sx={{ 
+                          color: 'error.main',
+                          minWidth: 'auto',
+                          px: 1,
+                          fontSize: '0.75rem'
+                        }}
+                      >
+                        {t('cart.removeCoupon')}
+                      </Button>
+                    </Box>
+                  ) : (
+                    <>
+                      {!showCouponField ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                            {t('cart.haveCoupon')}
+                          </Typography>
+                          <Button
+                            size="small"
+                            onClick={() => setShowCouponField(true)}
+                            sx={{ 
+                              textTransform: 'none',
+                              fontSize: '0.75rem',
+                              color: primaryColor,
+                              minWidth: 'auto',
+                              px: 1
+                            }}
+                          >
+                            {t('cart.applyCoupon')}
+                          </Button>
+                        </Box>
+                      ) : (
+                        <Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.875rem' }}>
+                              {t('cart.coupon')}
+                            </Typography>
+                            <Button
+                              size="small"
+                              onClick={() => {
+                                setShowCouponField(false);
+                                setCouponCode('');
+                                setCouponError('');
+                              }}
+                              sx={{ 
+                                textTransform: 'none',
+                                fontSize: '0.75rem',
+                                color: 'text.secondary',
+                                minWidth: 'auto',
+                                px: 0.5
+                              }}
+                            >
+                              Fechar
+                            </Button>
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                            <TextField
+                              fullWidth
+                              label={t('cart.couponCode')}
+                              value={couponCode}
+                              onChange={(e) => {
+                                setCouponCode(e.target.value.toUpperCase());
+                                setCouponError('');
+                              }}
+                              margin="dense"
+                              error={!!couponError}
+                              helperText={couponError}
+                              size="small"
+                              sx={{ flex: 1 }}
+                            />
+                            <Button
+                              variant="outlined"
+                              onClick={handleApplyCoupon}
+                              disabled={applyingCoupon || !couponCode.trim()}
+                              size="small"
+                              sx={{ 
+                                mt: '8px',
+                                height: '40px',
+                                minWidth: '80px',
+                                borderColor: primaryColor,
+                                color: primaryColor,
+                                '&:hover': {
+                                  borderColor: primaryColor,
+                                  bgcolor: `${primaryColor}10`,
+                                },
+                              }}
+                            >
+                              {applyingCoupon ? <CircularProgress size={16} /> : t('cart.applyCoupon')}
+                            </Button>
+                          </Box>
+                        </Box>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Resumo */}
             <Card sx={{ mb: 2, borderRadius: 2, bgcolor: '#f5f5f5' }}>
               <CardContent>
                 <Box sx={{ mb: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Subtotal</Typography>
+                    <Typography variant="body2">{t('cart.subtotal')}</Typography>
                     <Typography variant="body2">{subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Typography>
                   </Box>
                   {deliveryType === 'delivery' && (
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2">Taxa de entrega</Typography>
+                      <Typography variant="body2">{t('cart.deliveryFee')}</Typography>
                       <Typography variant="body2">
                         {store?.settingsDelivery?.deliveryOption === 'customerPickup' 
-                          ? 'À combinar'
+                          ? t('cart.toArrange')
                           : store?.settingsDelivery?.deliveryOption === 'fixed'
                           ? (store.settingsDelivery.fixedValue > 0 
                               ? store.settingsDelivery.fixedValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                              : 'Grátis')
+                              : t('cart.free'))
                           : deliveryFee > 0
                           ? deliveryFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                          : 'Calculando...'}
+                          : t('cart.calculating')}
+                      </Typography>
+                    </Box>
+                  )}
+                  {couponDiscount > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" sx={{ color: 'success.main' }}>
+                        {t('cart.discount')}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'success.main' }}>
+                        - {couponDiscount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </Typography>
                     </Box>
                   )}
                   <Divider sx={{ my: 1 }} />
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                      Total
+                      {t('cart.total')}
                     </Typography>
                     <Typography variant="h6" sx={{ fontWeight: 700, color: primaryColor }}>
                       {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -723,11 +986,12 @@ const Cart = ({ open, onClose, cart, store, onUpdateCart, apiService, primaryCol
               }}
               startIcon={<WhatsAppIcon />}
             >
-              {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Finalizar Pedido'}
+              {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : t('cart.finishOrder')}
             </Button>
           </Box>
         )}
       </S.CartContent>
+      <BackdropLoading loading={loading} />
     </Drawer>
   );
 };

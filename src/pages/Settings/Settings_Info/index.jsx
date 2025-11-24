@@ -209,13 +209,13 @@ const Settings_Info = () => {
             <Grid item xs={12} sm={12}>
               <span>
                 {
-                  addressData.zipCode?.length >= 8
+                  addressData.street && addressData.city
                     ? t('settings.changeAddress')
                     : t('settings.registerAddress')
                 }
               </span>
             </Grid>
-            {addressData.zipCode?.length >= 8 && (
+            {addressData.street && addressData.city && (
               <>
                 <Grid item xs={12} sm={12}>
                   <TextField
@@ -233,6 +233,26 @@ const Settings_Info = () => {
                     {...propsTextField}
                   />
                 </Grid>
+                {addressData.state && (
+                  <Grid item xs={12} sm={12}>
+                    <TextField
+                      disabled
+                      label="Estado/Província"
+                      value={addressData.state || ''}
+                      {...propsTextField}
+                    />
+                  </Grid>
+                )}
+                {addressData.country && (
+                  <Grid item xs={12} sm={12}>
+                    <TextField
+                      disabled
+                      label="País"
+                      value={addressData.country || ''}
+                      {...propsTextField}
+                    />
+                  </Grid>
+                )}
                 <Grid item xs={12} sm={12}>
                   <TextField
                     disabled

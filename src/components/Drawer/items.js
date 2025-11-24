@@ -21,9 +21,19 @@ export const useMenuItems = () => {
       Icon: () => <i className="fas fa-list"></i>,
     },
     {
+      text: t('menu.coupons'),
+      link: '/coupons',
+      Icon: () => <i className="fas fa-ticket-alt"></i>,
+    },
+    {
       text: t('menu.financial'),
       link: '/financial',
       Icon: () => <i className="fas fa-money-bill-wave"></i>, 
+    },
+    {
+      text: t('menu.reports'),
+      link: '/reports',
+      Icon: () => <i className="fas fa-chart-bar"></i>, 
     },
     {
       text: t('menu.visitors'),
@@ -61,9 +71,19 @@ export const menuItems = [
     Icon: () => <i className="fas fa-list"></i>,
   },
   {
+    text: 'Cupons',
+    link: '/coupons',
+    Icon: () => <i className="fas fa-ticket-alt"></i>,
+  },
+  {
     text: 'Financeiro',
     link: '/financial',
     Icon: () => <i className="fas fa-money-bill-wave"></i>, 
+  },
+  {
+    text: 'Relatórios',
+    link: '/reports',
+    Icon: () => <i className="fas fa-chart-bar"></i>, 
   },
   {
     text: 'Visitantes',

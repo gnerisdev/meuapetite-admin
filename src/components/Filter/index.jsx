@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   TextField,
@@ -15,11 +15,19 @@ import {
 } from '@mui/material';
 import * as S from './style';
 
-const Filter = ({ filters, onApplyFilters }) => {
+const Filter = ({ filters, onApplyFilters, initialValues = {} }) => {
   const { t } = useTranslation('admin');
-  const [selectedFilters, setSelectedFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState(initialValues);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+
+  useEffect(() => {
+    if (initialValues && Object.keys(initialValues).length > 0) {
+      setSelectedFilters(initialValues);
+      const hasFilters = Object.values(initialValues).some(val => val !== '' && val !== null && val !== undefined);
+      setHasActiveFilters(hasFilters);
+    }
+  }, [initialValues]);
 
   const handleFilterChange = (filterName, value) => {
     const newFilters = { ...selectedFilters, [filterName]: value };
